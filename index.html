@@ -126,11 +126,7 @@
             box-shadow: 0px 0px 0px 0px var(--color-dark);
         }
 
-        .google-btn {
-            background: #4285F4; /* Cor oficial do Google */
-        }
-
-        .auth-toggle-link, .support-link {
+        .auth-toggle-link {
             display: block;
             text-align: center;
             margin-top: 1.5rem;
@@ -143,7 +139,7 @@
             text-decoration: underline;
         }
 
-        #auth-message, #activation-message {
+        #auth-message {
             text-align: center;
             padding: 12px;
             border-radius: var(--border-radius-2);
@@ -154,10 +150,10 @@
             border: 2px solid var(--color-dark);
         }
         
-        #auth-message.success, #activation-message.success { background-color: var(--color-success); }
-        #auth-message.error, #activation-message.error { background-color: var(--color-danger); }
+        #auth-message.success { background-color: var(--color-success); }
+        #auth-message.error { background-color: var(--color-danger); }
 
-        #register-form {
+        #register-form, #forgot-password-form {
             display: none;
         }
     </style>
@@ -175,10 +171,8 @@
             <div class="input-group">
                 <input type="password" id="login-password" placeholder="Sua senha" required>
             </div>
+            <a class="auth-toggle-link" id="show-forgot-password" style="margin-top: -1rem; margin-bottom: 1.5rem; text-align: right; font-size: 0.8rem;">Esqueci minha senha?</a>
             <button type="submit">Entrar</button>
-            <button type="button" class="google-btn" id="google-signin-btn">
-                <span class="material-icons-sharp">login</span> Entrar com Google
-            </button>
             <a class="auth-toggle-link" id="show-register">Não tem uma conta? Cadastre-se</a>
         </form>
 
@@ -194,6 +188,17 @@
             </div>
             <button type="submit">Cadastrar</button>
             <a class="auth-toggle-link" id="show-login">Já tem uma conta? Faça login</a>
+        </form>
+
+        <!-- Forgot Password Form -->
+        <form id="forgot-password-form">
+            <h1>Redefinir Senha</h1>
+            <p>Digite seu e-mail para enviarmos um link de redefinição.</p>
+            <div class="input-group">
+                <input type="email" id="forgot-email" placeholder="Seu e-mail" required>
+            </div>
+            <button type="submit">Enviar Link</button>
+            <a class="auth-toggle-link" id="show-login-from-forgot">Voltar para o Login</a>
         </form>
     </div>
 
