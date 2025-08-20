@@ -150,12 +150,11 @@ forgotPasswordForm.addEventListener('submit', (e) => {
 // Redireciona o usuário se ele estiver logado
 auth.onAuthStateChanged(user => {
     if (user) {
-        // Verifica se o usuário está na página de ativação
-        if (window.location.pathname.includes('ativacao.html')) {
-            // A lógica de ativação específica está no ativacao.html e seu script
-        } else {
-            // Se estiver logado e não for a página de ativação, vai para o dashboard
-            window.location.href = 'dashboard.html';
+        // Verifica se o usuário já está na página de dashboard para evitar um loop de redirecionamento.
+        if (!window.location.pathname.includes('dashboard.html')) {
+            // *** MUDANÇA PRINCIPAL AQUI ***
+            // Redireciona para o caminho absoluto do dashboard.
+            window.location.href = '/Teste/dashboard.html';
         }
     }
 });
