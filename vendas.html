@@ -58,20 +58,25 @@
                 <div class="card">
                     <h2>Itens e Cliente</h2>
                     <div class="form-container" id="form-vendas">
-                        <div class="input-group" style="grid-column: 1 / -1;">
+                        <div class="input-group">
                             <label for="nomeCliente">Nome do Cliente</label>
                             <input type="text" id="nomeCliente" placeholder="Opcional">
                         </div>
                         <div class="input-group">
-                            <label for="selectProdutoVenda">Adicionar Produto</label>
-                            <select id="selectProdutoVenda">
-                                <option value="">Cadastre um item no estoque primeiro</option>
-                            </select>
+                            <label for="telefoneCliente">Telefone do Cliente</label>
+                            <input type="tel" id="telefoneCliente" placeholder="(xx) X xxxx-xxxx" maxlength="16">
                         </div>
-                        <div class="input-group">
-                            <label for="quantidadeVenda">Quantidade</label>
-                            <input type="number" id="quantidadeVenda" value="1" min="1">
+
+                        <div class="input-group" style="grid-column: 1 / -1;">
+                             <label for="selectProdutoVenda">Adicionar Produto</label>
+                             <div style="display: flex; gap: 1rem;">
+                                <select id="selectProdutoVenda" style="flex-grow: 1;">
+                                    <option value="">Cadastre um item no estoque primeiro</option>
+                                </select>
+                                <input type="number" id="quantidadeVenda" value="1" min="1" style="max-width: 100px;">
+                             </div>
                         </div>
+
                         <div class="input-group" style="grid-column: 1 / -1;">
                             <button type="button" id="addItemOrcamento" style="width: auto; padding: 10px 30px;">Adicionar ao Orçamento</button>
                         </div>
@@ -132,7 +137,8 @@
 
                 <div class="card">
                     <h2>Histórico de Vendas</h2>
-                    <input type="text" class="search-bar" id="pesquisa-venda-cliente" placeholder="Pesquisar por nome do cliente...">
+                    <input type="text" class="search-bar" id="pesquisa-venda-cliente" placeholder="Pesquisar...">
+                    <small class="search-instruction">Pesquise por nome ou número de telefone.</small>
                     <div class="table-wrapper">
                         <table>
                             <thead>
@@ -174,12 +180,21 @@
                     let orcamento = [];
                     let todasAsVendas = [];
 
-                    // --- Currency Formatting ---
                     document.querySelectorAll('.currency').forEach(input => {
                         input.addEventListener('input', () => formatCurrency(input));
                     });
+                    
+                    // --- Phone Formatting ---
+                    const telefoneInput = document.getElementById('telefoneCliente');
+                    telefoneInput.addEventListener('input', (e) => {
+                        let value = e.target.value.replace(/\D/g, '');
+                        value = value.replace(/^(\d{2})(\d)/g, '($1) $2');
+                        value = value.replace(/(\d{5})(\d)/, '$1-$2');
+                        value = value.replace(/(\d)(\d{4})$/, '$1-$2');
+                        e.target.value = value;
+                    });
 
-                    // --- Load Products into Select ---
+
                     function carregarProdutosParaVenda() {
                         const unsub = getUserCollection("produtos").orderBy("nome").onSnapshot((querySnapshot) => {
                             const selectVenda = document.getElementById('selectProdutoVenda');
@@ -200,7 +215,6 @@
                         firestoreUnsubscribes.push(unsub);
                     }
 
-                    // --- Budget Logic ---
                     function atualizarTabelaOrcamento() {
                         const orcamentoBody = document.getElementById('orcamento-body');
                         orcamentoBody.innerHTML = '';
@@ -253,7 +267,6 @@
 
                     document.getElementById('descontoVenda').addEventListener('input', atualizarTabelaOrcamento);
 
-                    // --- Finalize Sale ---
                     document.getElementById('registrar-venda-btn').addEventListener('click', () => {
                         if (orcamento.length === 0) {
                             showAppNotification('Adicione pelo menos um item para registrar a venda.');
@@ -262,6 +275,7 @@
                         const totalVenda = parseFloat(document.getElementById('total-venda').textContent.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
                         const venda = {
                             cliente: document.getElementById('nomeCliente').value || 'Não informado',
+                            telefone: document.getElementById('telefoneCliente').value || '',
                             data: firebase.firestore.FieldValue.serverTimestamp(),
                             itens: orcamento,
                             subtotal: parseFloat(document.getElementById('subtotal-venda').textContent.replace('R$ ', '').replace(/\./g, '').replace(',', '.')),
@@ -282,12 +296,12 @@
                             showAppNotification('Venda registrada com sucesso!', 'Sucesso');
                             orcamento = [];
                             document.getElementById('nomeCliente').value = '';
+                            document.getElementById('telefoneCliente').value = '';
                             document.getElementById('descontoVenda').value = '';
                             atualizarTabelaOrcamento();
                         }).catch(error => console.error('Erro ao registrar a venda: ', error));
                     });
 
-                    // --- Share on WhatsApp ---
                     document.getElementById('share-whatsapp').addEventListener('click', () => {
                         if (orcamento.length === 0) {
                             showAppNotification('Adicione itens ao orçamento para compartilhar.');
@@ -303,7 +317,6 @@
                         window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
                     });
 
-                    // --- Sales History ---
                     function carregarHistoricoVendas() {
                         const unsub = getUserCollection('vendas').onSnapshot(snapshot => {
                             todasAsVendas = [];
@@ -336,7 +349,14 @@
 
                     document.getElementById('pesquisa-venda-cliente').addEventListener('input', (e) => {
                         const termo = e.target.value.toLowerCase().trim();
-                        const vendasFiltradas = termo ? todasAsVendas.filter(v => v.cliente.toLowerCase().includes(termo)) : todasAsVendas;
+                        if (!termo) {
+                            renderizarVendas(todasAsVendas);
+                            return;
+                        }
+                        const vendasFiltradas = todasAsVendas.filter(v => 
+                            v.cliente.toLowerCase().includes(termo) || 
+                            (v.telefone && v.telefone.replace(/\D/g, '').includes(termo.replace(/\D/g, '')))
+                        );
                         renderizarVendas(vendasFiltradas);
                     });
 
