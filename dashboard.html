@@ -60,7 +60,10 @@
                     <div class="dashboard-filters">
                         <select id="filtro-mes"></select>
                         <select id="filtro-ano"></select>
-                        <button id="export-dashboard-btn" class="btn-success">
+                        <button id="export-pdf-btn" title="Baixar Relatório em PDF">
+                            <span class="material-icons-sharp">picture_as_pdf</span>
+                        </button>
+                        <button id="export-dashboard-btn" class="btn-success" title="Compartilhar Relatório">
                             <span class="material-icons-sharp">share</span>
                         </button>
                     </div>
@@ -147,6 +150,9 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- Bibliotecas para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -158,6 +164,7 @@
                     const filtroMes = document.getElementById('filtro-mes');
                     const filtroAno = document.getElementById('filtro-ano');
                     const exportBtn = document.getElementById('export-dashboard-btn');
+                    const exportPdfBtn = document.getElementById('export-pdf-btn');
                     const dashboardTitle = document.getElementById('dashboard-title');
 
                     function populateDateFilters() {
@@ -186,7 +193,6 @@
                         const lucroEl = document.getElementById('lucro-mes');
                         const topSellersBody = document.getElementById('produtos-mais-saida-body');
                         
-                        // --- CALCULA INVESTIMENTO TOTAL E LUCRO POTENCIAL (SEMPRE DO ESTOQUE ATUAL) ---
                         const unsubEstoque = getUserCollection('produtos').onSnapshot(snapshot => {
                             let investimentoTotal = 0;
                             let lucroPotencialTotal = 0;
@@ -200,7 +206,6 @@
                         });
                         firestoreUnsubscribes.push(unsubEstoque);
 
-                        // --- CALCULA FATURAMENTO E ITENS MAIS VENDIDOS DO PERÍODO SELECIONADO ---
                         let primeiroDia, ultimoDia;
                         if (mes === 'all') {
                             primeiroDia = new Date(ano, 0, 1);
@@ -237,7 +242,7 @@
                                 if (sortedTopSellers.length === 0) {
                                     topSellersBody.innerHTML = '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
                                 } else {
-                                    sortedTopSellers.slice(0, 5).forEach(([nome, quantidade]) => {
+                                    sortedTopSellers.slice(0, 10).forEach(([nome, quantidade]) => { // Aumentado para 10
                                         const tr = document.createElement('tr');
                                         tr.innerHTML = `<td>${nome}</td><td>${quantidade}</td>`;
                                         topSellersBody.appendChild(tr);
@@ -265,8 +270,8 @@
                                 datasets: [{
                                     label: 'Unidades Vendidas',
                                     data: data,
-                                    backgroundColor: ['rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)'],
-                                    borderColor: ['rgba(255, 255, 255, 1)'],
+                                    backgroundColor: ['#009688', '#ff7782', '#ffbb55', '#41f1b6', '#7380ec', '#363949', '#a3a6ad'],
+                                    borderColor: ['#fff'],
                                     borderWidth: 2
                                 }]
                             },
@@ -310,11 +315,96 @@
                             }
                         }
                     }
+
+                    function exportDashboardPDF() {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+
+                        const periodo = dashboardTitle.textContent.replace('Dashboard - ', '');
+                        const faturamento = document.getElementById('faturamento-mes').textContent;
+                        const investimento = document.getElementById('investimento-mes').textContent;
+                        const lucro = document.getElementById('lucro-mes').textContent;
+                        const dataGeracao = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                        // Cabeçalho
+                        doc.setFontSize(22);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Relatório de Desempenho', 105, 20, { align: 'center' });
+                        doc.setFontSize(14);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(`Stolinx - ${periodo}`, 105, 30, { align: 'center' });
+
+                        // Resumo Financeiro
+                        doc.setFontSize(16);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Resumo Financeiro', 14, 50);
+                        doc.autoTable({
+                            startY: 55,
+                            head: [['Métrica', 'Valor']],
+                            body: [
+                                ['Faturamento no Período', faturamento],
+                                ['Investimento Total (Estoque Atual)', investimento],
+                                ['Lucro Potencial (Estoque Atual)', lucro]
+                            ],
+                            theme: 'striped',
+                            headStyles: { fillColor: [0, 150, 136] } // Cor Teal
+                        });
+
+                        // Tabela de Produtos Mais Vendidos
+                        const topSellersRows = [];
+                        document.querySelectorAll('#produtos-mais-saida-body tr').forEach(row => {
+                            const cells = row.querySelectorAll('td');
+                            if (cells.length > 1) {
+                                topSellersRows.push([cells[0].textContent, cells[1].textContent]);
+                            }
+                        });
+                        
+                        if(topSellersRows.length > 0) {
+                            doc.addPage();
+                            doc.setFontSize(16);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('Produtos Mais Vendidos no Período', 14, 20);
+                            doc.autoTable({
+                                startY: 25,
+                                head: [['Produto', 'Unidades Vendidas']],
+                                body: topSellersRows,
+                                theme: 'grid',
+                                headStyles: { fillColor: [0, 150, 136] }
+                            });
+                        }
+                        
+                        // Gráfico (como imagem)
+                        const chartCanvas = document.getElementById('salesChart');
+                        if (chartCanvas && topSellersRows.length > 0) {
+                            const chartImage = chartCanvas.toDataURL('image/png', 1.0);
+                             if (doc.internal.getNumberOfPages() === 1) {
+                                doc.addPage();
+                            }
+                            doc.setFontSize(16);
+                            doc.setFont('helvetica', 'bold');
+                            doc.text('Gráfico de Vendas por Produto', 105, 20, { align: 'center' });
+                            doc.addImage(chartImage, 'PNG', 15, 30, 180, 100);
+                        }
+
+
+                        // Rodapé em todas as páginas
+                        const pageCount = doc.internal.getNumberOfPages();
+                        for(let i = 1; i <= pageCount; i++) {
+                            doc.setPage(i);
+                            doc.setFontSize(10);
+                            doc.text(`Gerado em: ${dataGeracao}`, 14, 285);
+                            doc.text(`Página ${i} de ${pageCount}`, 200, 285, { align: 'right' });
+                        }
+
+                        // Salvar o PDF
+                        doc.save(`Relatorio_Stolinx_${periodo.replace(/ /g, '_')}.pdf`);
+                    }
                     
                     // --- INITIALIZATION ---
                     filtroMes.addEventListener('change', atualizarDashboard);
                     filtroAno.addEventListener('change', atualizarDashboard);
                     exportBtn.addEventListener('click', exportDashboardData);
+                    exportPdfBtn.addEventListener('click', exportDashboardPDF);
 
                     populateDateFilters();
                     atualizarDashboard();
