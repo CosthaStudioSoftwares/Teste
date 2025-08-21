@@ -247,9 +247,7 @@
         <div class="right-panel">
             <div id="auth-container">
                 <div class="auth-form-wrapper">
-                    <!-- INÍCIO DA ALTERAÇÃO: Mensagem de autenticação movida para fora dos formulários -->
                     <div id="auth-message"></div>
-                    <!-- FIM DA ALTERAÇÃO -->
 
                     <!-- Formulário de Login -->
                     <form id="login-form">
@@ -357,8 +355,6 @@
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
                     console.error("Erro de Login:", error);
-                    // Devido a uma particularidade deste projeto Firebase que retorna um erro genérico,
-                    // a melhor abordagem é fornecer uma mensagem única e útil para o usuário.
                     showAuthMessage("E-mail ou senha incorretos. Se não tiver uma conta, clique em 'Cadastre-se'.");
                 });
         });
@@ -373,10 +369,7 @@
             }
             auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
-                    // Envia o e-mail de verificação
                     userCredential.user.sendEmailVerification();
-
-                    // Cria o perfil do usuário no Firestore
                     return db.collection('users').doc(userCredential.user.uid).set({
                         email: userCredential.user.email,
                         active: false,
@@ -387,16 +380,38 @@
                     showAuthMessage('Cadastro realizado! Verifique seu e-mail para ativar a conta e depois faça o login.', 'success');
                     setTimeout(() => {
                         document.getElementById('show-login').click();
-                    }, 4000); // Mais tempo para ler a mensagem
+                    }, 4000);
                 })
                 .catch(error => {
-                    let message = 'Ocorreu um erro ao criar a conta.';
+                    // ===================================================================
+                    // INÍCIO DA ALTERAÇÃO: Lógica para e-mail já cadastrado
+                    // ===================================================================
                     if (error.code === 'auth/email-already-in-use') {
-                        message = 'Este e-mail já está em uso.';
-                    } else if (error.code === 'auth/weak-password') {
-                        message = 'A senha deve ter pelo menos 6 caracteres.';
+                        // Pega o e-mail que o usuário tentou cadastrar
+                        const existingEmail = document.getElementById('register-email').value;
+                        
+                        // Preenche o campo de e-mail no formulário de login
+                        document.getElementById('login-email').value = existingEmail;
+                        
+                        // Simula o clique para trocar para a tela de login
+                        document.getElementById('show-login').click();
+                        
+                        // Aguarda a animação da troca de tela e exibe a mensagem
+                        setTimeout(() => {
+                            showAuthMessage('Este e-mail já está cadastrado. Por favor, insira sua senha para entrar.');
+                        }, 500); // 500ms é um bom tempo para a transição
+
+                    } else {
+                        // Mantém a lógica para outros erros de cadastro
+                        let message = 'Ocorreu um erro ao criar a conta.';
+                        if (error.code === 'auth/weak-password') {
+                            message = 'A senha deve ter pelo menos 6 caracteres.';
+                        }
+                        showAuthMessage(message);
                     }
-                    showAuthMessage(message);
+                    // ===================================================================
+                    // FIM DA ALTERAÇÃO
+                    // ===================================================================
                 });
         });
         
@@ -426,14 +441,12 @@
         // --- Auth State Observer ---
         auth.onAuthStateChanged(user => {
             if (user) {
-                // Checa se o e-mail do usuário foi verificado
                 if (!user.emailVerified) {
                     showAuthMessage('Por favor, verifique seu e-mail para continuar. Olhe sua caixa de entrada ou spam.');
-                    auth.signOut(); // Desloga o usuário para forçar a verificação
+                    auth.signOut();
                     return;
                 }
 
-                // Se o e-mail foi verificado, continua para a checagem de ativação
                 const userRef = db.collection('users').doc(user.uid);
                 userRef.get().then(doc => {
                     if (doc.exists) {
@@ -445,7 +458,6 @@
                             window.location.href = 'ativacao.html';
                         }
                     } else {
-                         // Fallback caso o documento não exista (não deve acontecer no fluxo normal)
                          userRef.set({
                             email: user.email,
                             active: false,
