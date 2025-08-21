@@ -1,5 +1,5 @@
 :root {
-    --color-primary: #7380ec;
+    --color-primary: #009688; /* Nova Cor Principal (Teal) */
     --color-danger: #ff7782;
     --color-success: #41f1b6;
     --color-warning: #ffbb55;
@@ -8,12 +8,12 @@
     --color-info-light: #dce1eb;
     --color-dark: #363949;
     --color-light: rgba(132, 139, 200, 0.18);
-    --color-primary-variant: #111e88;
+    --color-primary-variant: #00796B; /* Variante Mais Escura do Teal */
     --color-dark-variant: #677483;
     --color-background: #f6f6f9;
 
     --card-border-radius: 2rem;
-    --border-radius-1: 0.4rem;
+    --border-radius-a: 0.4rem;
     --border-radius-2: 0.8rem;
     --border-radius-3: 1.2rem;
 
@@ -58,122 +58,6 @@ body {
     overflow-x: hidden;
     color: var(--color-dark);
     transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* --- ACTIVATION & AUTH STYLES --- */
-#auth-container, #activation-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 100vh;
-    padding: 1rem;
-}
-
-.auth-form-wrapper {
-    width: 100%;
-    max-width: 450px;
-    background: var(--color-white);
-    padding: var(--card-padding);
-    border-radius: var(--card-border-radius);
-    box-shadow: var(--box-shadow);
-    transition: all 300ms ease;
-}
-
-.auth-form-wrapper:hover {
-     box-shadow: none;
-}
-
-.auth-form-wrapper h1 {
-    text-align: center;
-    margin-bottom: 0.5rem;
-}
-
-.auth-form-wrapper h1 .danger {
-    color: var(--color-danger);
-}
-
-.auth-form-wrapper p {
-    text-align: center;
-    color: var(--color-info-dark);
-    margin-bottom: 2rem;
-}
-
-.auth-form-wrapper .input-group {
-    margin-bottom: 1.5rem;
-}
-
-.auth-form-wrapper input {
-    width: 100%;
-    padding: 12px;
-    border-radius: var(--border-radius-2);
-    background: var(--color-info-light);
-    font-family: 'Poppins', sans-serif;
-    color: var(--color-dark);
-    font-size: 0.9rem;
-    border: 2px solid transparent;
-    transition: all 0.3s ease;
-}
-
-.auth-form-wrapper input:focus {
-    border-color: var(--color-primary);
-}
-
-.auth-form-wrapper button {
-    width: 100%;
-    padding: 12px;
-    border-radius: var(--border-radius-2);
-    background: var(--color-primary);
-    color: #fff;
-    cursor: pointer;
-    transition: all 300ms ease;
-    font-family: 'Poppins', sans-serif;
-    font-size: 1rem;
-    font-weight: 500;
-}
-
-.auth-form-wrapper button:hover {
-    opacity: 0.8;
-}
-
-.google-btn {
-    background: #db4437 !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 1rem;
-}
-
-.auth-toggle-link, .support-link {
-    display: block;
-    text-align: center;
-    margin-top: 1.5rem;
-    color: var(--color-primary);
-    cursor: pointer;
-}
-
-#auth-message, #activation-message {
-    text-align: center;
-    padding: 10px;
-    border-radius: var(--border-radius-1);
-    margin-bottom: 1rem;
-    display: none;
-    font-weight: 500;
-}
-
-#auth-message.success, #activation-message.success {
-    background-color: var(--color-success);
-    color: #fff;
-}
-
-#auth-message.error, #activation-message.error {
-    background-color: var(--color-danger);
-    color: #fff;
-}
-
-#register-form {
-    display: none;
 }
 
 /* --- MAIN APP STYLES --- */
