@@ -352,22 +352,18 @@
             }
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
-                    // Lista de erros que devem mostrar a mesma mensagem para o usuário
-                    const loginErrorCodes = [
-                        'auth/user-not-found',
-                        'auth/wrong-password',
-                        'auth/invalid-credential',
-                        'auth/invalid-email'
-                    ];
-
-                    if (loginErrorCodes.includes(error.code)) {
+                    // Lógica de erro atualizada para mensagens específicas
+                    if (error.code === 'auth/user-not-found') {
+                        showAuthMessage('Nenhum usuário encontrado com este e-mail.');
+                    } else if (error.code === 'auth/wrong-password') {
+                        showAuthMessage('Senha incorreta. Por favor, tente novamente.');
+                    } else if (error.code === 'auth/invalid-credential') {
+                        // Fallback para versões mais recentes do Firebase
                         showAuthMessage('E-mail ou senha incorretos.');
-                    } else if (error.code === 'auth/user-disabled') {
-                        showAuthMessage('Este usuário foi desativado.');
                     } else {
-                        // Para outros erros (ex: auth/network-request-failed), mostra uma mensagem genérica
+                        // Para outros erros, mostra uma mensagem genérica
                         console.error("Login Error:", error);
-                        showAuthMessage('Ocorreu um erro ao tentar fazer login. Verifique sua conexão.');
+                        showAuthMessage('Ocorreu um erro. Verifique sua conexão e tente novamente.');
                     }
                 });
         });
