@@ -198,11 +198,11 @@
                             .catch(error => { console.error("Erro ao adicionar categoria: ", error); });
                     });
 
-                    formCadastro.addEventListener('submit', (e) => {
+                    formCadastro.addEventListener('submit', async (e) => {
                         e.preventDefault();
                         const produto = {
-                            codigo: formCadastro.codigoProduto.value,
-                            nome: formCadastro.nomeProduto.value,
+                            codigo: formCadastro.codigoProduto.value.trim(),
+                            nome: formCadastro.nomeProduto.value.trim(),
                             validade: formCadastro.validade.value,
                             quantidade: parseInt(formCadastro.quantidade.value),
                             custo: parseFloat(formCadastro.custoProduto.value.replace(/\./g, '').replace(',', '.')),
@@ -211,6 +211,43 @@
                         };
                         produto.lucroUnidade = produto.valorVenda - produto.custo;
                         const editId = formCadastro.editProductId.value;
+
+                        // --- VERIFICAÇÃO DE DUPLICIDADE ---
+                        try {
+                            const codigoQuery = getUserCollection("produtos").where("codigo", "==", produto.codigo).get();
+                            const nomeQuery = getUserCollection("produtos").where("nome", "==", produto.nome).get();
+
+                            const [codigoSnapshot, nomeSnapshot] = await Promise.all([codigoQuery, nomeQuery]);
+
+                            let codigoExists = false;
+                            codigoSnapshot.forEach(doc => {
+                                if (doc.id !== editId) { // Garante que não é o mesmo produto sendo editado
+                                    codigoExists = true;
+                                }
+                            });
+
+                            let nomeExists = false;
+                            nomeSnapshot.forEach(doc => {
+                                if (doc.id !== editId) { // Garante que não é o mesmo produto sendo editado
+                                    nomeExists = true;
+                                }
+                            });
+
+                            if (codigoExists) {
+                                showAppNotification('Já existe um produto cadastrado com este código.');
+                                return;
+                            }
+
+                            if (nomeExists) {
+                                showAppNotification('Já existe um produto cadastrado com este nome.');
+                                return;
+                            }
+                        } catch (error) {
+                            console.error("Erro ao verificar duplicados: ", error);
+                            showAppNotification("Ocorreu um erro ao verificar o produto. Tente novamente.");
+                            return;
+                        }
+                        // --- FIM DA VERIFICAÇÃO ---
 
                         if (editId) {
                             getUserCollection("produtos").doc(editId).update(produto)
