@@ -3,25 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stolinx - Ativação</title>
+    <title>Stolinx - Ativação de Conta</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --color-primary: #009688; /* Cor Principal (Teal) */
+            --color-danger: #ff7782;
+            --color-success: #41f1b6;
+            --color-white: #fff;
+            --color-info-dark: #7d8da1;
+            --color-info-light: #dce1eb;
+            --color-dark: #363949;
+            --color-primary-variant: #00796B; /* Variante Mais Escura do Teal */
+            --color-dark-variant: #677483;
+            --color-background: #f6f6f9;
+            --border-radius-1: 0.4rem;
+            --border-radius-2: 0.8rem;
+        }
+        * { margin: 0; padding: 0; outline: 0; appearance: none; border: 0; text-decoration: none; list-style: none; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: var(--color-background); color: var(--color-dark); overflow: hidden; }
+        .auth-main-container { display: grid; grid-template-columns: 45% 55%; height: 100vh; width: 100vw; }
+        .left-panel { background: linear-gradient(-45deg, var(--color-primary), var(--color-primary-variant)); color: var(--color-white); display: flex; align-items: center; justify-content: center; padding: 3rem; text-align: center; }
+        .branding-content h1 { font-size: 3rem; font-weight: 700; margin-bottom: 1rem; letter-spacing: 1px; }
+        .branding-content h1 .danger { color: var(--color-danger); text-shadow: 1px 1px 5px rgba(0,0,0,0.2); }
+        .branding-content p { font-size: 1.1rem; font-weight: 300; max-width: 400px; }
+        .right-panel { display: flex; align-items: center; justify-content: center; padding: 2rem; }
+        #activation-container { width: 100%; display: flex; justify-content: center; }
+        .auth-form-wrapper { width: 100%; max-width: 400px; background: var(--color-white); padding: 2.5rem; border-radius: var(--border-radius-2); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1); }
+        .auth-form-wrapper h1 { text-align: center; font-size: 2rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .auth-form-wrapper p { text-align: center; color: var(--color-info-dark); margin-bottom: 2.5rem; }
+        .input-group { margin-bottom: 1.5rem; }
+        .input-group input { width: 100%; padding: 14px; border-radius: var(--border-radius-1); background: var(--color-background); border: 1px solid var(--color-info-light); font-family: 'Poppins', sans-serif; color: var(--color-dark); font-size: 0.95rem; transition: border-color 0.3s ease, box-shadow 0.3s ease; }
+        .input-group input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(0, 150, 136, 0.25); }
+        .auth-form-wrapper button { width: 100%; padding: 14px; border-radius: var(--border-radius-1); background: var(--color-primary); color: #fff; cursor: pointer; transition: background-color 0.3s ease, transform 0.2s ease; font-family: 'Poppins', sans-serif; font-size: 1rem; font-weight: 500; }
+        .auth-form-wrapper button:hover { background: var(--color-primary-variant); transform: translateY(-2px); }
+        .support-link, .auth-toggle-link { display: block; text-align: center; margin-top: 1.5rem; color: var(--color-primary); cursor: pointer; font-weight: 500; transition: color 0.3s ease; }
+        .support-link:hover, .auth-toggle-link:hover { text-decoration: underline; color: var(--color-primary-variant); }
+        #activation-message { text-align: center; padding: 12px; border-radius: var(--border-radius-1); margin-bottom: 1.5rem; display: none; font-weight: 500; color: var(--color-white); }
+        #activation-message.success { background-color: var(--color-success); }
+        #activation-message.error { background-color: var(--color-danger); }
+        @media (max-width: 768px) { .auth-main-container { grid-template-columns: 1fr; } .left-panel { display: none; } .right-panel { background: var(--color-background); } .auth-form-wrapper { box-shadow: none; padding: 1.5rem; } }
+    </style>
 </head>
 <body>
-    <div id="activation-container" style="display: flex;">
-        <div class="auth-form-wrapper">
-            <form id="activation-form">
-                <h1>Ativação Necessária</h1>
-                <p id="activation-prompt-message">Sua conta não está ativa. Por favor, insira o código de ativação que você recebeu.</p>
-                <div id="activation-message"></div>
-                <div class="input-group">
-                    <input type="text" id="activation-code" placeholder="Cole seu código de ativação aqui" required>
+    <div class="auth-main-container">
+        <!-- Painel Esquerdo com a marca -->
+        <div class="left-panel">
+            <div class="branding-content">
+                <h1>Quase lá!</h1>
+                <p>Ative sua conta para começar a organizar seu negócio e impulsionar suas vendas.</p>
+            </div>
+        </div>
+
+        <!-- Painel Direito com o formulário de ativação -->
+        <div class="right-panel">
+            <div id="activation-container">
+                <div class="auth-form-wrapper">
+                    <form id="activation-form">
+                        <h1>Ativação de Conta</h1>
+                        <p id="activation-prompt-message">Insira o código de ativação que você recebeu.</p>
+                        <div id="activation-message"></div>
+                        <div class="input-group">
+                            <input type="text" id="activation-code" placeholder="Seu código de ativação" required>
+                        </div>
+                        <button type="submit" class="btn-success" style="background: var(--color-success);">Ativar Conta</button>
+                        <a class="support-link" href="https://wa.me/5579999462052?text=Olá,%20eu%20quero%20ativar%20o%20meu%20login%20no%20Stolinx" target="_blank">Não tem um código?</a>
+                        <a class="auth-toggle-link" id="activation-logout" style="color: var(--color-dark-variant);">Sair</a>
+                    </form>
                 </div>
-                <button type="submit" class="btn-success">Ativar</button>
-                <a class="support-link" href="https://wa.me/5579999462052?text=Olá,%20eu%20quero%20ativar%20o%20meu%20login%20no%20Stolinx" target="_blank">Não tem um código? Suporte via WhatsApp</a>
-                <a class="auth-toggle-link" id="activation-logout">Sair</a>
-            </form>
+            </div>
         </div>
     </div>
 
