@@ -353,17 +353,25 @@
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
                     // Lógica de erro atualizada para mensagens específicas
-                    if (error.code === 'auth/user-not-found') {
-                        showAuthMessage('Nenhum usuário encontrado com este e-mail.');
-                    } else if (error.code === 'auth/wrong-password') {
-                        showAuthMessage('Senha incorreta. Por favor, tente novamente.');
-                    } else if (error.code === 'auth/invalid-credential') {
-                        // Fallback para versões mais recentes do Firebase
-                        showAuthMessage('E-mail ou senha incorretos.');
-                    } else {
-                        // Para outros erros, mostra uma mensagem genérica
-                        console.error("Login Error:", error);
-                        showAuthMessage('Ocorreu um erro. Verifique sua conexão e tente novamente.');
+                    switch (error.code) {
+                        case 'auth/user-not-found':
+                            showAuthMessage('Nenhum usuário encontrado com este e-mail.');
+                            break;
+                        case 'auth/wrong-password':
+                            showAuthMessage('Senha incorreta. Por favor, tente novamente.');
+                            break;
+                        case 'auth/invalid-credential':
+                            // Fallback para versões mais recentes do Firebase que unificam os erros
+                            showAuthMessage('E-mail ou senha incorretos.');
+                            break;
+                        case 'auth/invalid-email':
+                             showAuthMessage('O formato do e-mail é inválido.');
+                             break;
+                        default:
+                            // Para outros erros, mostra uma mensagem genérica
+                            console.error("Login Error:", error);
+                            showAuthMessage('Ocorreu um erro. Verifique sua conexão e tente novamente.');
+                            break;
                     }
                 });
         });
