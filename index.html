@@ -352,27 +352,31 @@
             }
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
-                    // Lógica de erro atualizada para mensagens específicas
+                    // ===================================================================
+                    // INÍCIO DA ALTERAÇÃO: Lógica de erro com mensagens específicas
+                    // ===================================================================
                     switch (error.code) {
                         case 'auth/user-not-found':
-                            showAuthMessage('Nenhum usuário encontrado com este e-mail.');
+                            showAuthMessage('Usuário não cadastrado. Clique em "Cadastre-se" para criar uma conta.');
                             break;
                         case 'auth/wrong-password':
-                            showAuthMessage('Senha incorreta. Por favor, tente novamente.');
+                            showAuthMessage('E-mail ou senha incorretos. Por favor, verifique e tente novamente.');
                             break;
-                        case 'auth/invalid-credential':
-                            // Fallback para versões mais recentes do Firebase que unificam os erros
-                            showAuthMessage('E-mail ou senha incorretos.');
+                        case 'auth/invalid-credential': // Erro mais genérico usado por versões mais recentes do SDK
+                            showAuthMessage('E-mail ou senha incorretos. Por favor, verifique e tente novamente.');
                             break;
                         case 'auth/invalid-email':
                              showAuthMessage('O formato do e-mail é inválido.');
                              break;
                         default:
-                            // Para outros erros, mostra uma mensagem genérica
+                            // Para outros erros (como falta de conexão), mostra uma mensagem genérica
                             console.error("Login Error:", error);
                             showAuthMessage('Ocorreu um erro. Verifique sua conexão e tente novamente.');
                             break;
                     }
+                    // ===================================================================
+                    // FIM DA ALTERAÇÃO
+                    // ===================================================================
                 });
         });
 
