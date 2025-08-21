@@ -92,21 +92,21 @@
                         <span class="material-icons-sharp">bar_chart</span>
                         <div class="middle">
                             <div>
-                                <h3>Investimento (Estoque)</h3>
-                                <h1 id="investimento-mes">R$ 0,00</h1>
+                                <h3>Custo do Período</h3>
+                                <h1 id="custo-periodo">R$ 0,00</h1>
                             </div>
                         </div>
-                        <small class="text-muted">Custo total do estoque</small>
+                        <small class="text-muted">Custo dos produtos vendidos</small>
                     </div>
                     <div class="income">
                         <span class="material-icons-sharp">stacked_line_chart</span>
                         <div class="middle">
                             <div>
-                                <h3>Lucro Potencial (Estoque)</h3>
-                                <h1 id="lucro-mes">R$ 0,00</h1>
+                                <h3>Lucro do Período</h3>
+                                <h1 id="lucro-periodo">R$ 0,00</h1>
                             </div>
                         </div>
-                        <small class="text-muted">Lucro de todo o estoque</small>
+                        <small class="text-muted">Lucro das vendas no período</small>
                     </div>
                 </div>
 
@@ -196,23 +196,10 @@
                         const mes = filtroMes.value;
 
                         const faturamentoEl = document.getElementById('faturamento-mes');
-                        const investimentoEl = document.getElementById('investimento-mes');
-                        const lucroEl = document.getElementById('lucro-mes');
+                        const custoEl = document.getElementById('custo-periodo');
+                        const lucroEl = document.getElementById('lucro-periodo');
                         const topSellersBody = document.getElementById('produtos-mais-saida-body');
                         
-                        const unsubEstoque = getUserCollection('produtos').onSnapshot(snapshot => {
-                            let investimentoTotal = 0;
-                            let lucroPotencialTotal = 0;
-                            snapshot.forEach(doc => {
-                                const p = doc.data();
-                                investimentoTotal += (p.custo || 0) * (p.quantidade || 0);
-                                lucroPotencialTotal += (p.valorVenda - p.custo) * (p.quantidade || 0);
-                            });
-                            investimentoEl.textContent = `R$ ${investimentoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                            lucroEl.textContent = `R$ ${lucroPotencialTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
-                        });
-                        firestoreUnsubscribes.push(unsubEstoque);
-
                         let primeiroDia, ultimoDia;
                         if (mes === 'all') {
                             primeiroDia = new Date(ano, 0, 1);
@@ -229,11 +216,17 @@
                             .where('data', '<=', ultimoDia)
                             .onSnapshot(snapshot => {
                                 let faturamentoPeriodo = 0;
+                                let custoPeriodo = 0;
+                                let lucroPeriodo = 0;
                                 const topSellers = {};
 
                                 snapshot.forEach(doc => {
                                     const v = doc.data();
                                     faturamentoPeriodo += v.total || 0;
+                                    lucroPeriodo += v.lucro || 0;
+                                    // Custo é a diferença entre o faturamento e o lucro
+                                    custoPeriodo += (v.total - v.lucro) || 0;
+
                                     if (v.itens) {
                                         v.itens.forEach(item => {
                                             topSellers[item.nome] = (topSellers[item.nome] || 0) + item.qtd;
@@ -242,6 +235,8 @@
                                 });
 
                                 faturamentoEl.textContent = `R$ ${faturamentoPeriodo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                                custoEl.textContent = `R$ ${custoPeriodo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                                lucroEl.textContent = `R$ ${lucroPeriodo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
 
                                 const sortedTopSellers = Object.entries(topSellers).sort((a, b) => b[1] - a[1]);
                                 
@@ -249,7 +244,7 @@
                                 if (sortedTopSellers.length === 0) {
                                     topSellersBody.innerHTML = '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
                                 } else {
-                                    sortedTopSellers.slice(0, 10).forEach(([nome, quantidade]) => { // Aumentado para 10
+                                    sortedTopSellers.slice(0, 10).forEach(([nome, quantidade]) => {
                                         const tr = document.createElement('tr');
                                         tr.innerHTML = `<td>${nome}</td><td>${quantidade}</td>`;
                                         topSellersBody.appendChild(tr);
@@ -293,8 +288,8 @@
                     async function exportDashboardData() {
                         const periodo = dashboardTitle.textContent.replace('Dashboard - ', '');
                         const faturamento = document.getElementById('faturamento-mes').textContent;
-                        const investimento = document.getElementById('investimento-mes').textContent;
-                        const lucro = document.getElementById('lucro-mes').textContent;
+                        const custo = document.getElementById('custo-periodo').textContent;
+                        const lucro = document.getElementById('lucro-periodo').textContent;
                         
                         let topSellersText = '';
                         document.querySelectorAll('#produtos-mais-saida-body tr').forEach(row => {
@@ -306,7 +301,7 @@
                             }
                         });
 
-                        const reportText = `*Relatório Stolinx - ${periodo}*\n\n- *Faturamento:* ${faturamento}\n- *Investimento (Estoque Atual):* ${investimento}\n- *Lucro Potencial (Estoque Atual):* ${lucro}\n\n*Produtos Mais Vendidos:*${topSellersText}`;
+                        const reportText = `*Relatório Stolinx - ${periodo}*\n\n- *Faturamento:* ${faturamento}\n- *Custo do Período:* ${custo}\n- *Lucro do Período:* ${lucro}\n\n*Produtos Mais Vendidos:*${topSellersText}`;
 
                         if (navigator.share) {
                             try {
@@ -329,8 +324,8 @@
 
                         const periodo = dashboardTitle.textContent.replace('Dashboard - ', '');
                         const faturamento = document.getElementById('faturamento-mes').textContent;
-                        const investimento = document.getElementById('investimento-mes').textContent;
-                        const lucro = document.getElementById('lucro-mes').textContent;
+                        const custo = document.getElementById('custo-periodo').textContent;
+                        const lucro = document.getElementById('lucro-periodo').textContent;
                         const dataGeracao = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
                         // Cabeçalho
@@ -350,8 +345,8 @@
                             head: [['Métrica', 'Valor']],
                             body: [
                                 ['Faturamento no Período', faturamento],
-                                ['Investimento Total (Estoque Atual)', investimento],
-                                ['Lucro Potencial (Estoque Atual)', lucro]
+                                ['Custo dos Produtos Vendidos', custo],
+                                ['Lucro Realizado no Período', lucro]
                             ],
                             theme: 'striped',
                             headStyles: { fillColor: [0, 150, 136] } // Cor Teal
