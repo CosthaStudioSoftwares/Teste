@@ -352,11 +352,11 @@
             }
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
-                    if (error.code === 'auth/user-not-found') {
-                        showAuthMessage('Nenhum usuário encontrado com este e-mail.');
-                    } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    // Firebase unifica os erros 'user-not-found' e 'wrong-password' em 'invalid-credential' por segurança.
+                    if (error.code === 'auth/invalid-credential') {
                         showAuthMessage('E-mail ou senha incorretos.');
                     } else {
+                        console.error("Login Error:", error); // Log para depuração
                         showAuthMessage('Ocorreu um erro. Tente novamente.');
                     }
                 });
@@ -414,7 +414,7 @@
                 })
                 .catch((error) => {
                     let message = 'Ocorreu um erro ao enviar o e-mail.';
-                    if (error.code === 'auth/user-not-found') {
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
                         message = 'Nenhuma conta encontrada com este e-mail.';
                     }
                     showAuthMessage(message);
