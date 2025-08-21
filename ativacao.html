@@ -158,7 +158,7 @@
                         if (userData.active && userData.expiresAt && userData.expiresAt.toDate() > now) {
                             window.location.href = 'dashboard.html';
                         } else {
-                            document.getElementById('activation-prompt-message').textContent = `Sua conta (${user.email}) não está ativa ou expirou. Insira um novo código de ativação.`;
+                             document.getElementById('activation-prompt-message').textContent = `Sua conta (${user.email}) não está ativa ou expirou. Insira um novo código de ativação.`;
                         }
                     }
                 });
@@ -169,3 +169,4 @@
     </script>
 </body>
 </html>
+
