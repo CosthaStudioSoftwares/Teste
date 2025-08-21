@@ -137,8 +137,11 @@
 
                 <div class="card">
                     <h2>Histórico de Vendas</h2>
-                    <input type="text" class="search-bar" id="pesquisa-venda-cliente" placeholder="Pesquisar...">
-                    <small class="search-instruction">Pesquise por nome ou número de telefone.</small>
+                    <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
+                        <input type="text" class="search-bar" id="pesquisa-venda-cliente" placeholder="Pesquisar..." style="flex-grow: 1; margin-bottom: 0;">
+                        <input type="date" id="filtro-data-venda" style="padding: 8px; border-radius: var(--border-radius-1); background: var(--color-info-light); color: var(--color-dark);">
+                    </div>
+                    <small class="search-instruction">Pesquise por nome, telefone ou filtre por data.</small>
                     <div class="table-wrapper">
                         <table>
                             <thead>
@@ -353,18 +356,40 @@
                         });
                     }
 
-                    document.getElementById('pesquisa-venda-cliente').addEventListener('input', (e) => {
-                        const termo = e.target.value.toLowerCase().trim();
-                        if (!termo) {
-                            renderizarVendas(todasAsVendas);
-                            return;
+                    const pesquisaInput = document.getElementById('pesquisa-venda-cliente');
+                    const filtroDataInput = document.getElementById('filtro-data-venda');
+
+                    function filtrarVendas() {
+                        const termo = pesquisaInput.value.toLowerCase().trim();
+                        const dataSelecionada = filtroDataInput.value; 
+
+                        let vendasFiltradas = todasAsVendas;
+
+                        if (termo) {
+                            vendasFiltradas = vendasFiltradas.filter(v => 
+                                v.cliente.toLowerCase().includes(termo) || 
+                                (v.telefone && v.telefone.replace(/\D/g, '').includes(termo.replace(/\D/g, '')))
+                            );
                         }
-                        const vendasFiltradas = todasAsVendas.filter(v => 
-                            v.cliente.toLowerCase().includes(termo) || 
-                            (v.telefone && v.telefone.replace(/\D/g, '').includes(termo.replace(/\D/g, '')))
-                        );
+
+                        if (dataSelecionada) {
+                            vendasFiltradas = vendasFiltradas.filter(v => {
+                                if (!v.data || !v.data.toDate) return false;
+                                const dataVenda = v.data.toDate();
+                                const ano = dataVenda.getFullYear();
+                                const mes = String(dataVenda.getMonth() + 1).padStart(2, '0');
+                                const dia = String(dataVenda.getDate()).padStart(2, '0');
+                                const dataVendaFormatada = `${ano}-${mes}-${dia}`;
+                                return dataVendaFormatada === dataSelecionada;
+                            });
+                        }
+
                         renderizarVendas(vendasFiltradas);
-                    });
+                    }
+
+                    pesquisaInput.addEventListener('input', filtrarVendas);
+                    filtroDataInput.addEventListener('change', filtrarVendas);
+
 
                     // --- Initial Load ---
                     document.getElementById('dataVenda').value = new Date().toLocaleDateString('pt-BR');
