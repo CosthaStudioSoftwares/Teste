@@ -24,9 +24,7 @@
                     <input type="password" id="login-password" placeholder="Sua senha" required>
                 </div>
                 <button type="submit">Entrar</button>
-                <button type="button" class="google-btn" id="google-signin-btn">
-                    <span class="material-icons-sharp">login</span> Entrar com Google
-                </button>
+                <a class="auth-toggle-link" id="forgot-password" style="margin-top: 1rem; margin-bottom: -1rem;">Esqueceu a senha?</a>
                 <a class="auth-toggle-link" id="show-register">Não tem uma conta? Cadastre-se</a>
             </form>
 
@@ -143,25 +141,25 @@
                 });
         });
         
-        document.getElementById('google-signin-btn').addEventListener('click', () => {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider)
-                .then(result => {
-                    const user = result.user;
-                    const userRef = db.collection('users').doc(user.uid);
-                    return userRef.get().then(doc => {
-                        if (!doc.exists) {
-                            return userRef.set({
-                                email: user.email,
-                                active: false,
-                                expiresAt: null
-                            });
-                        }
-                    });
+        // --- Forgot Password Logic ---
+        document.getElementById('forgot-password').addEventListener('click', (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            if (!email) {
+                showAuthMessage('Por favor, digite seu e-mail no campo acima para redefinir a senha.');
+                return;
+            }
+
+            auth.sendPasswordResetEmail(email)
+                .then(() => {
+                    showAuthMessage('E-mail de redefinição de senha enviado! Verifique sua caixa de entrada.', 'success');
                 })
-                .catch(error => {
-                    showAuthMessage('Erro ao fazer login com Google.');
-                    console.error("Google Sign-in Error:", error);
+                .catch((error) => {
+                    let message = 'Ocorreu um erro ao enviar o e-mail.';
+                    if (error.code === 'auth/user-not-found') {
+                        message = 'Nenhuma conta encontrada com este e-mail.';
+                    }
+                    showAuthMessage(message);
                 });
         });
 
