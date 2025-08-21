@@ -353,27 +353,38 @@
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
                     // ===================================================================
-                    // INÍCIO DA ALTERAÇÃO: Lógica de erro com mensagens específicas
+                    // INÍCIO DA ALTERAÇÃO: Lógica de erro para diagnóstico final
                     // ===================================================================
-                    switch (error.code) {
-                        case 'auth/user-not-found':
-                            showAuthMessage('Usuário não cadastrado. Clique em "Cadastre-se" para criar uma conta.');
-                            break;
-                        case 'auth/wrong-password':
-                            showAuthMessage('E-mail ou senha incorretos. Por favor, verifique e tente novamente.');
-                            break;
-                        case 'auth/invalid-credential': // Erro mais genérico usado por versões mais recentes do SDK
-                            showAuthMessage('E-mail ou senha incorretos. Por favor, verifique e tente novamente.');
-                            break;
-                        case 'auth/invalid-email':
-                             showAuthMessage('O formato do e-mail é inválido.');
-                             break;
-                        default:
-                            // Para outros erros (como falta de conexão), mostra uma mensagem genérica
-                            console.error("Login Error:", error);
-                            showAuthMessage('Ocorreu um erro. Verifique sua conexão e tente novamente.');
-                            break;
+                    
+                    // 1. Loga o objeto de erro completo no console para análise técnica.
+                    console.error("DETALHES COMPLETOS DO ERRO FIREBASE:", error);
+
+                    // 2. Monta uma mensagem de erro detalhada para o usuário.
+                    let userMessage = 'Ocorreu um erro. Verifique sua conexão e tente novamente.'; // Mensagem padrão.
+                    
+                    if (error.code) {
+                        // Se o código de erro existir, usa-o.
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                userMessage = 'Usuário não cadastrado. Clique em "Cadastre-se" para criar uma conta.';
+                                break;
+                            case 'auth/wrong-password':
+                            case 'auth/invalid-credential':
+                                userMessage = 'E-mail ou senha incorretos. Por favor, verifique e tente novamente.';
+                                break;
+                            default:
+                                // Se for um código de erro desconhecido, mostra o código para ajudar a depurar.
+                                userMessage = `Erro: ${error.code}. Por favor, contate o suporte.`;
+                                break;
+                        }
+                    } else if (error.message) {
+                        // Se não houver código, mas houver uma mensagem, mostra a mensagem.
+                        userMessage = `Ocorreu um erro: ${error.message}`;
                     }
+
+                    // 3. Exibe a mensagem final na tela.
+                    showAuthMessage(userMessage);
+
                     // ===================================================================
                     // FIM DA ALTERAÇÃO
                     // ===================================================================
