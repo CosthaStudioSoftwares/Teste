@@ -100,7 +100,12 @@
 
                 <div class="card">
                     <h2>Itens em Estoque</h2>
-                    <input type="text" class="search-bar" id="searchEstoque" placeholder="Pesquisar...">
+                     <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 0.5rem;">
+                        <input type="text" class="search-bar" id="searchEstoque" placeholder="Pesquisar..." style="margin-bottom: 0;">
+                        <button id="export-estoque-pdf-btn" title="Baixar Relatório de Estoque em PDF" style="width: auto; flex-shrink: 0;">
+                            <span class="material-icons-sharp">picture_as_pdf</span>
+                        </button>
+                    </div>
                     <small class="search-instruction">Busque por nome, código, "vencendo" ou "repor".</small>
                     <div class="table-wrapper">
                         <table>
@@ -159,21 +164,24 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <!-- Bibliotecas para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
     <script src="main.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             initializeApp({
                 page: 'estoque',
                 init: () => {
+                    let todosOsProdutos = [];
+                    let todasAsCategorias = [];
                     const formCadastro = document.getElementById('form-cadastro-produto');
                     const categoryModal = document.getElementById('category-modal');
                     
-                    // --- Currency Formatting ---
                     document.querySelectorAll('.currency').forEach(input => {
                         input.addEventListener('input', () => formatCurrency(input));
                     });
 
-                    // --- Category Modal Logic ---
                     document.getElementById('open-category-modal').addEventListener('click', () => categoryModal.style.display = 'flex');
                     document.getElementById('close-category-modal').addEventListener('click', () => categoryModal.style.display = 'none');
                     categoryModal.addEventListener('click', (e) => { if (e.target === categoryModal) categoryModal.style.display = 'none'; });
@@ -190,7 +198,6 @@
                             .catch(error => { console.error("Erro ao adicionar categoria: ", error); });
                     });
 
-                    // --- Product Form Logic ---
                     formCadastro.addEventListener('submit', (e) => {
                         e.preventDefault();
                         const produto = {
@@ -225,9 +232,9 @@
                         }
                     });
 
-                    // --- Data Loading ---
                     function carregarCategorias() {
                         const unsub = getUserCollection("categorias").orderBy("nome").onSnapshot(snapshot => {
+                            todasAsCategorias = [];
                             const selectCategoria = document.getElementById('categoria');
                             const listaCategoriasUl = document.getElementById('lista-categorias');
                             selectCategoria.innerHTML = "";
@@ -239,6 +246,7 @@
                             }
                             snapshot.forEach(doc => {
                                 const categoria = doc.data();
+                                todasAsCategorias.push({id: doc.id, ...categoria});
                                 const option = document.createElement('option');
                                 option.value = categoria.nome;
                                 option.textContent = categoria.nome;
@@ -264,6 +272,7 @@
 
                     function carregarProdutos() {
                         const unsub = getUserCollection("produtos").orderBy("nome").onSnapshot((querySnapshot) => {
+                            todosOsProdutos = [];
                             const tabelaCorpo = document.getElementById("tabela-estoque-body");
                             tabelaCorpo.innerHTML = '';
                             if (querySnapshot.empty) {
@@ -275,13 +284,13 @@
 
                             querySnapshot.forEach((doc) => {
                                 const produto = doc.data();
+                                todosOsProdutos.push({id: doc.id, ...produto});
                                 const lucroUnidade = produto.lucroUnidade || (produto.valorVenda - produto.custo);
                                 const tr = document.createElement('tr');
                                 
                                 let avisoVencimento = '';
                                 if (produto.validade) {
-                                    const [ano, mes, dia] = produto.validade.split('-').map(Number);
-                                    const dataValidade = new Date(ano, mes - 1, dia);
+                                    const dataValidade = new Date(produto.validade + 'T00:00:00');
                                     const diffDays = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
                                     if (diffDays >= 0 && diffDays <= 30) {
                                         tr.classList.add('vencimento-proximo');
@@ -336,7 +345,6 @@
                         });
                     }
 
-                    // --- Search Logic ---
                     document.getElementById('searchEstoque').addEventListener('keyup', (e) => {
                         const filtro = e.target.value.toUpperCase();
                         const linhas = document.querySelectorAll("#tabela-estoque-body tr");
@@ -351,7 +359,117 @@
                         });
                     });
 
-                    // --- Initial Load ---
+                    function exportEstoquePDF() {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+                        const dataGeracao = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+                        doc.setFontSize(22);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Relatório de Estoque', 105, 20, { align: 'center' });
+                        doc.setFontSize(12);
+                        doc.setFont('helvetica', 'normal');
+                        doc.text(`Gerado em: ${dataGeracao}`, 105, 28, { align: 'center' });
+
+                        const produtosPorCategoria = {};
+                        todasAsCategorias.forEach(cat => {
+                            produtosPorCategoria[cat.nome] = [];
+                        });
+                        produtosPorCategoria['Sem Categoria'] = [];
+
+                        const produtosVencendo = [];
+                        const produtosRepor = [];
+                        const hoje = new Date();
+                        hoje.setHours(0, 0, 0, 0);
+
+                        todosOsProdutos.forEach(p => {
+                            if (p.categoria && produtosPorCategoria[p.categoria]) {
+                                produtosPorCategoria[p.categoria].push(p);
+                            } else {
+                                produtosPorCategoria['Sem Categoria'].push(p);
+                            }
+
+                            if (p.validade) {
+                                const dataValidade = new Date(p.validade + 'T00:00:00');
+                                const diffDays = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
+                                if (diffDays >= 0 && diffDays <= 30) {
+                                    produtosVencendo.push(p);
+                                }
+                            }
+
+                            if (p.quantidade < 3) {
+                                produtosRepor.push(p);
+                            }
+                        });
+
+                        let finalY = 40;
+
+                        doc.setFontSize(16);
+                        doc.setFont('helvetica', 'bold');
+                        doc.text('Estoque Atual por Categoria', 14, finalY);
+                        finalY += 5;
+
+                        for (const categoria in produtosPorCategoria) {
+                            if (produtosPorCategoria[categoria].length > 0) {
+                                const body = produtosPorCategoria[categoria].map(p => [
+                                    p.codigo, p.nome, p.quantidade, `R$ ${p.custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`, `R$ ${p.valorVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`,
+                                    p.validade ? new Date(p.validade + 'T00:00:00').toLocaleDateString('pt-BR') : 'N/A'
+                                ]);
+
+                                doc.autoTable({
+                                    startY: finalY,
+                                    head: [[{ content: categoria, colSpan: 6, styles: { fillColor: [0, 150, 136], textColor: [255,255,255], fontStyle: 'bold' } }]],
+                                    body: [
+                                        ['Código', 'Produto', 'Qtd.', 'Custo', 'Venda', 'Validade'],
+                                        ...body
+                                    ],
+                                    theme: 'grid',
+                                    didParseCell: (data) => {
+                                        if (data.row.index === 1 && data.section === 'body') {
+                                            data.cell.styles.fillColor = '#f0f0f0';
+                                            data.cell.styles.fontStyle = 'bold';
+                                        }
+                                    }
+                                });
+                                finalY = doc.autoTable.previous.finalY + 5;
+                            }
+                        }
+                        
+                        if (produtosVencendo.length > 0 || produtosRepor.length > 0) {
+                            doc.addPage();
+                            finalY = 20;
+                        }
+
+                        if (produtosVencendo.length > 0) {
+                            doc.setFontSize(16); doc.text('Produtos Vencendo em Breve (Próximos 30 dias)', 14, finalY);
+                            doc.autoTable({
+                                startY: finalY + 5, head: [['Produto', 'Qtd.', 'Data de Validade']],
+                                body: produtosVencendo.map(p => [p.nome, p.quantidade, new Date(p.validade + 'T00:00:00').toLocaleDateString('pt-BR')]),
+                                theme: 'striped', headStyles: { fillColor: [255, 187, 85] }
+                            });
+                            finalY = doc.autoTable.previous.finalY + 15;
+                        }
+
+                        if (produtosRepor.length > 0) {
+                            doc.setFontSize(16); doc.text('Produtos para Repor (Qtd. < 3)', 14, finalY);
+                            doc.autoTable({
+                                startY: finalY + 5, head: [['Produto', 'Quantidade Atual']],
+                                body: produtosRepor.map(p => [p.nome, p.quantidade]),
+                                theme: 'striped', headStyles: { fillColor: [255, 119, 130] }
+                            });
+                        }
+
+                        const pageCount = doc.internal.getNumberOfPages();
+                        for(let i = 1; i <= pageCount; i++) {
+                            doc.setPage(i);
+                            doc.setFontSize(10);
+                            doc.text(`Página ${i} de ${pageCount}`, 200, 285, { align: 'right' });
+                        }
+
+                        doc.save(`Relatorio_Estoque_Stolinx_${new Date().toISOString().slice(0,10)}.pdf`);
+                    }
+
+                    document.getElementById('export-estoque-pdf-btn').addEventListener('click', exportEstoquePDF);
                     carregarCategorias();
                     carregarProdutos();
                 }
