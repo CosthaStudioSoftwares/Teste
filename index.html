@@ -352,8 +352,8 @@
             }
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
-                    // CORREÇÃO: Trata os códigos de erro da versão 8 do Firebase
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    // Trata os códigos de erro de login inválido.
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                         showAuthMessage('E-mail ou senha incorretos.');
                     } else {
                         console.error("Login Error:", error); // Log para depuração
