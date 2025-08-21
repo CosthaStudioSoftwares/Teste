@@ -308,20 +308,27 @@
                     }
 
                     function carregarProdutos() {
-                        const unsub = getUserCollection("produtos").orderBy("nome").onSnapshot((querySnapshot) => {
-                            todosOsProdutos = [];
+                        const unsub = getUserCollection("produtos").onSnapshot((querySnapshot) => {
+                            let produtosTemp = [];
+                            querySnapshot.forEach((doc) => {
+                                produtosTemp.push({ id: doc.id, ...doc.data() });
+                            });
+
+                            // Ordena os produtos em ordem alfabética (insensível a maiúsculas/minúsculas)
+                            todosOsProdutos = produtosTemp.sort((a, b) => {
+                                return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
+                            });
+
                             const tabelaCorpo = document.getElementById("tabela-estoque-body");
                             tabelaCorpo.innerHTML = '';
-                            if (querySnapshot.empty) {
+                            if (todosOsProdutos.length === 0) {
                                 tabelaCorpo.innerHTML = '<tr><td colspan="7">Nenhum produto cadastrado.</td></tr>';
                                 return;
                             }
                             const hoje = new Date();
                             hoje.setHours(0, 0, 0, 0);
 
-                            querySnapshot.forEach((doc) => {
-                                const produto = doc.data();
-                                todosOsProdutos.push({id: doc.id, ...produto});
+                            todosOsProdutos.forEach((produto) => {
                                 const lucroUnidade = produto.lucroUnidade || (produto.valorVenda - produto.custo);
                                 const tr = document.createElement('tr');
                                 
@@ -348,12 +355,12 @@
                                 const editBtn = document.createElement('button');
                                 editBtn.className = 'btn-warning';
                                 editBtn.innerHTML = `<span class="material-icons-sharp">edit</span>`;
-                                editBtn.onclick = () => editarProduto(doc.id);
+                                editBtn.onclick = () => editarProduto(produto.id);
                                 const deleteBtn = document.createElement('button');
                                 deleteBtn.className = 'btn-danger';
                                 deleteBtn.innerHTML = `<span class="material-icons-sharp">delete</span>`;
                                 deleteBtn.onclick = () => showAppConfirmation(`Tem certeza que deseja excluir o produto "${produto.nome}"?`, () => {
-                                    getUserCollection("produtos").doc(doc.id).delete();
+                                    getUserCollection("produtos").doc(produto.id).delete();
                                 });
                                 actionsTd.appendChild(editBtn);
                                 actionsTd.appendChild(deleteBtn);
