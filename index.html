@@ -247,11 +247,14 @@
         <div class="right-panel">
             <div id="auth-container">
                 <div class="auth-form-wrapper">
+                    <!-- INÍCIO DA ALTERAÇÃO: Mensagem de autenticação movida para fora dos formulários -->
+                    <div id="auth-message"></div>
+                    <!-- FIM DA ALTERAÇÃO -->
+
                     <!-- Formulário de Login -->
                     <form id="login-form">
                         <h1>Acesse sua Conta</h1>
                         <p>Bem-vindo de volta!</p>
-                        <div id="auth-message"></div>
                         <div class="input-group">
                             <input type="email" id="login-email" placeholder="Seu e-mail" required>
                         </div>
@@ -351,9 +354,6 @@
                 return;
             }
 
-            // ===================================================================
-            // INÍCIO DA ALTERAÇÃO: Lógica de erro final e robusta
-            // ===================================================================
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
                     console.error("Erro de Login:", error);
@@ -361,9 +361,6 @@
                     // a melhor abordagem é fornecer uma mensagem única e útil para o usuário.
                     showAuthMessage("E-mail ou senha incorretos. Se não tiver uma conta, clique em 'Cadastre-se'.");
                 });
-            // ===================================================================
-            // FIM DA ALTERAÇÃO
-            // ===================================================================
         });
 
         registerForm.addEventListener('submit', (e) => {
