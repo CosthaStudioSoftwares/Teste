@@ -138,11 +138,13 @@
                 <div class="card">
                     <h2>Histórico de Vendas</h2>
                     <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
-                        <input type="text" class="search-bar" id="pesquisa-venda-cliente" placeholder="Pesquisar..." style="flex-grow: 1; margin-bottom: 0;">
-                        <input type="date" id="filtro-data-inicio" style="padding: 8px; border-radius: var(--border-radius-1); background: var(--color-info-light); color: var(--color-dark);">
-                        <span class="text-muted">até</span>
-                        <input type="date" id="filtro-data-fim" style="padding: 8px; border-radius: var(--border-radius-1); background: var(--color-info-light); color: var(--color-dark);">
-                        <button id="limpar-filtro-data" title="Limpar filtro de data" style="padding: 8px; width: auto; background: var(--color-dark-variant);"><span class="material-icons-sharp" style="font-size: 1.2rem; vertical-align: middle;">close</span></button>
+                        <input type="text" class="search-bar" id="pesquisa-venda-cliente" placeholder="Pesquisar..." style="flex-grow: 1; margin-bottom: 0; min-width: 200px;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: nowrap;">
+                            <input type="date" id="filtro-data-inicio" title="Data de início" style="padding: 8px; border-radius: var(--border-radius-1); background: var(--color-info-light); color: var(--color-dark);">
+                            <span class="text-muted">até</span>
+                            <input type="date" id="filtro-data-fim" title="Data de fim" style="padding: 8px; border-radius: var(--border-radius-1); background: var(--color-info-light); color: var(--color-dark);">
+                            <button id="limpar-filtro-data" title="Limpar filtro de data" style="padding: 8px; width: auto; background: var(--color-dark-variant);"><span class="material-icons-sharp" style="font-size: 1.2rem; vertical-align: middle;">close</span></button>
+                        </div>
                     </div>
                     <small class="search-instruction">Pesquise por nome, telefone ou filtre por um período.</small>
                     <div class="table-wrapper">
