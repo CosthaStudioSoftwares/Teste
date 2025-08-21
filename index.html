@@ -16,7 +16,7 @@
             --color-white: #fff;
             --color-info-dark: #7d8da1;
             --color-info-light: #dce1eb;
-            --color-dark: #a63949;
+            --color-dark: #363949;
             --color-light: rgba(132, 139, 200, 0.18);
             --color-primary-variant: #00796B; /* Variante Mais Escura do Teal */
             --color-dark-variant: #677483;
@@ -342,7 +342,7 @@
         });
 
         // --- Authentication Logic ---
-        loginForm.addEventListener('submit', async (e) => {
+        loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const email = document.getElementById('login-email').value;
             const password = document.getElementById('login-password').value;
@@ -352,34 +352,15 @@
             }
 
             // ===================================================================
-            // INÍCIO DA ALTERAÇÃO: Lógica de verificação com async/await
+            // INÍCIO DA ALTERAÇÃO: Lógica de erro final e robusta
             // ===================================================================
-            try {
-                const signInMethods = await auth.fetchSignInMethodsForEmail(email);
-
-                if (signInMethods.length === 0) {
-                    // Caso 1: O usuário definitivamente não existe.
-                    showAuthMessage('Usuário não cadastrado. Clique em "Cadastre-se" para criar uma conta.');
-                } else {
-                    // Caso 2: O usuário existe, então tentamos o login.
-                    try {
-                        await auth.signInWithEmailAndPassword(email, password);
-                        // Se o login for bem-sucedido, o onAuthStateChanged cuidará do redirecionamento.
-                    } catch (loginError) {
-                        // Se o login falhar aqui, é porque a senha está errada.
-                        console.error("Erro de Login (usuário existe):", loginError);
-                        showAuthMessage('E-mail ou senha incorretos. Por favor, verifique e tente novamente.');
-                    }
-                }
-            } catch (checkEmailError) {
-                // Caso 3: Ocorreu um erro ao tentar verificar o e-mail (ex: formato inválido).
-                console.error("Erro ao verificar e-mail:", checkEmailError);
-                let message = "Ocorreu um erro ao verificar o e-mail.";
-                if (checkEmailError.code === 'auth/invalid-email') {
-                    message = "O formato do e-mail é inválido.";
-                }
-                showAuthMessage(message);
-            }
+            auth.signInWithEmailAndPassword(email, password)
+                .catch(error => {
+                    console.error("Erro de Login:", error);
+                    // Devido a uma particularidade deste projeto Firebase que retorna um erro genérico,
+                    // a melhor abordagem é fornecer uma mensagem única e útil para o usuário.
+                    showAuthMessage("E-mail ou senha incorretos. Se não tiver uma conta, clique em 'Cadastre-se'.");
+                });
             // ===================================================================
             // FIM DA ALTERAÇÃO
             // ===================================================================
