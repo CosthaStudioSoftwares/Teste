@@ -352,12 +352,22 @@
             }
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
-                    // Trata os códigos de erro de login inválido.
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    // Lista de erros que devem mostrar a mesma mensagem para o usuário
+                    const loginErrorCodes = [
+                        'auth/user-not-found',
+                        'auth/wrong-password',
+                        'auth/invalid-credential',
+                        'auth/invalid-email'
+                    ];
+
+                    if (loginErrorCodes.includes(error.code)) {
                         showAuthMessage('E-mail ou senha incorretos.');
+                    } else if (error.code === 'auth/user-disabled') {
+                        showAuthMessage('Este usuário foi desativado.');
                     } else {
-                        console.error("Login Error:", error); // Log para depuração
-                        showAuthMessage('Ocorreu um erro. Tente novamente.');
+                        // Para outros erros (ex: auth/network-request-failed), mostra uma mensagem genérica
+                        console.error("Login Error:", error);
+                        showAuthMessage('Ocorreu um erro ao tentar fazer login. Verifique sua conexão.');
                     }
                 });
         });
