@@ -352,11 +352,13 @@
             }
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
-                    let message = 'Ocorreu um erro. Tente novamente.';
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                        message = 'E-mail ou senha incorretos.';
+                    if (error.code === 'auth/user-not-found') {
+                        showAuthMessage('Nenhum usuário encontrado com este e-mail.');
+                    } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                        showAuthMessage('E-mail ou senha incorretos.');
+                    } else {
+                        showAuthMessage('Ocorreu um erro. Tente novamente.');
                     }
-                    showAuthMessage(message);
                 });
         });
 
@@ -370,6 +372,10 @@
             }
             auth.createUserWithEmailAndPassword(email, password)
                 .then(userCredential => {
+                    // Envia o e-mail de verificação
+                    userCredential.user.sendEmailVerification();
+
+                    // Cria o perfil do usuário no Firestore
                     return db.collection('users').doc(userCredential.user.uid).set({
                         email: userCredential.user.email,
                         active: false,
@@ -377,10 +383,10 @@
                     });
                 })
                 .then(() => {
-                    showAuthMessage('Conta criada! Faça login para continuar.', 'success');
-                     setTimeout(() => {
+                    showAuthMessage('Cadastro realizado! Verifique seu e-mail para ativar a conta e depois faça o login.', 'success');
+                    setTimeout(() => {
                         document.getElementById('show-login').click();
-                      }, 2000);
+                    }, 4000); // Mais tempo para ler a mensagem
                 })
                 .catch(error => {
                     let message = 'Ocorreu um erro ao criar a conta.';
@@ -419,6 +425,14 @@
         // --- Auth State Observer ---
         auth.onAuthStateChanged(user => {
             if (user) {
+                // Checa se o e-mail do usuário foi verificado
+                if (!user.emailVerified) {
+                    showAuthMessage('Por favor, verifique seu e-mail para continuar. Olhe sua caixa de entrada ou spam.');
+                    auth.signOut(); // Desloga o usuário para forçar a verificação
+                    return;
+                }
+
+                // Se o e-mail foi verificado, continua para a checagem de ativação
                 const userRef = db.collection('users').doc(user.uid);
                 userRef.get().then(doc => {
                     if (doc.exists) {
@@ -430,6 +444,7 @@
                             window.location.href = 'ativacao.html';
                         }
                     } else {
+                         // Fallback caso o documento não exista (não deve acontecer no fluxo normal)
                          userRef.set({
                             email: user.email,
                             active: false,
