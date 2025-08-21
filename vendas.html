@@ -143,7 +143,12 @@
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Cliente</th><th>Data</th><th>Itens Vendidos</th><th>Forma Pag.</th><th>Valor Total</th>
+                                    <th>Cliente</th>
+                                    <th>Telefone</th>
+                                    <th>Data</th>
+                                    <th>Itens Vendidos</th>
+                                    <th>Forma Pag.</th>
+                                    <th>Valor Total</th>
                                 </tr>
                             </thead>
                             <tbody id="historico-vendas-body"></tbody>
@@ -331,13 +336,14 @@
                         const tabelaCorpo = document.getElementById('historico-vendas-body');
                         tabelaCorpo.innerHTML = '';
                         if (vendasParaRenderizar.length === 0) {
-                            tabelaCorpo.innerHTML = '<tr><td colspan="5">Nenhuma venda encontrada.</td></tr>';
+                            tabelaCorpo.innerHTML = '<tr><td colspan="6">Nenhuma venda encontrada.</td></tr>';
                             return;
                         }
                         vendasParaRenderizar.forEach(venda => {
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
                                 <td>${venda.cliente}</td>
+                                <td>${venda.telefone || 'N/A'}</td>
                                 <td>${venda.data && venda.data.toDate ? venda.data.toDate().toLocaleDateString('pt-BR') : '...'}</td>
                                 <td>${venda.itens.map(item => `${item.qtd}x ${item.nome}`).join(', ')}</td>
                                 <td>${venda.formaPagamento || 'N/A'}</td>
