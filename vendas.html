@@ -139,9 +139,12 @@
                     <h2>Histórico de Vendas</h2>
                     <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap;">
                         <input type="text" class="search-bar" id="pesquisa-venda-cliente" placeholder="Pesquisar..." style="flex-grow: 1; margin-bottom: 0;">
-                        <input type="date" id="filtro-data-venda" style="padding: 8px; border-radius: var(--border-radius-1); background: var(--color-info-light); color: var(--color-dark);">
+                        <input type="date" id="filtro-data-inicio" style="padding: 8px; border-radius: var(--border-radius-1); background: var(--color-info-light); color: var(--color-dark);">
+                        <span class="text-muted">até</span>
+                        <input type="date" id="filtro-data-fim" style="padding: 8px; border-radius: var(--border-radius-1); background: var(--color-info-light); color: var(--color-dark);">
+                        <button id="limpar-filtro-data" title="Limpar filtro de data" style="padding: 8px; width: auto; background: var(--color-dark-variant);"><span class="material-icons-sharp" style="font-size: 1.2rem; vertical-align: middle;">close</span></button>
                     </div>
-                    <small class="search-instruction">Pesquise por nome, telefone ou filtre por data.</small>
+                    <small class="search-instruction">Pesquise por nome, telefone ou filtre por um período.</small>
                     <div class="table-wrapper">
                         <table>
                             <thead>
@@ -357,11 +360,14 @@
                     }
 
                     const pesquisaInput = document.getElementById('pesquisa-venda-cliente');
-                    const filtroDataInput = document.getElementById('filtro-data-venda');
+                    const filtroDataInicio = document.getElementById('filtro-data-inicio');
+                    const filtroDataFim = document.getElementById('filtro-data-fim');
+                    const limparFiltroBtn = document.getElementById('limpar-filtro-data');
 
                     function filtrarVendas() {
                         const termo = pesquisaInput.value.toLowerCase().trim();
-                        const dataSelecionada = filtroDataInput.value; 
+                        const dataInicio = filtroDataInicio.value;
+                        const dataFim = filtroDataFim.value;
 
                         let vendasFiltradas = todasAsVendas;
 
@@ -372,15 +378,19 @@
                             );
                         }
 
-                        if (dataSelecionada) {
+                        if (dataInicio) {
+                            const inicio = new Date(dataInicio + 'T00:00:00');
                             vendasFiltradas = vendasFiltradas.filter(v => {
                                 if (!v.data || !v.data.toDate) return false;
-                                const dataVenda = v.data.toDate();
-                                const ano = dataVenda.getFullYear();
-                                const mes = String(dataVenda.getMonth() + 1).padStart(2, '0');
-                                const dia = String(dataVenda.getDate()).padStart(2, '0');
-                                const dataVendaFormatada = `${ano}-${mes}-${dia}`;
-                                return dataVendaFormatada === dataSelecionada;
+                                return v.data.toDate() >= inicio;
+                            });
+                        }
+                        
+                        if (dataFim) {
+                             const fim = new Date(dataFim + 'T23:59:59');
+                             vendasFiltradas = vendasFiltradas.filter(v => {
+                                if (!v.data || !v.data.toDate) return false;
+                                return v.data.toDate() <= fim;
                             });
                         }
 
@@ -388,7 +398,13 @@
                     }
 
                     pesquisaInput.addEventListener('input', filtrarVendas);
-                    filtroDataInput.addEventListener('change', filtrarVendas);
+                    filtroDataInicio.addEventListener('change', filtrarVendas);
+                    filtroDataFim.addEventListener('change', filtrarVendas);
+                    limparFiltroBtn.addEventListener('click', () => {
+                        filtroDataInicio.value = '';
+                        filtroDataFim.value = '';
+                        filtrarVendas();
+                    });
 
 
                     // --- Initial Load ---
