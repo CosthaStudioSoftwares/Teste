@@ -352,8 +352,8 @@
             }
             auth.signInWithEmailAndPassword(email, password)
                 .catch(error => {
-                    // Firebase unifica os erros 'user-not-found' e 'wrong-password' em 'invalid-credential' por segurança.
-                    if (error.code === 'auth/invalid-credential') {
+                    // CORREÇÃO: Trata os códigos de erro da versão 8 do Firebase
+                    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
                         showAuthMessage('E-mail ou senha incorretos.');
                     } else {
                         console.error("Login Error:", error); // Log para depuração
@@ -414,7 +414,7 @@
                 })
                 .catch((error) => {
                     let message = 'Ocorreu um erro ao enviar o e-mail.';
-                    if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+                    if (error.code === 'auth/user-not-found') {
                         message = 'Nenhuma conta encontrada com este e-mail.';
                     }
                     showAuthMessage(message);
