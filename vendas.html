@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stolinx - Vendas</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container visible">
+        <aside>
+            <div class="top">
+                <div class="logo">
+                    <h2>STOL<span class="danger">INX</span></h2>
+                </div>
+                <div class="close" id="close-btn">
+                    <span class="material-icons-sharp">close</span>
+                </div>
+            </div>
+            <div class="sidebar">
+                <a href="dashboard.html" class="nav-link">
+                    <span class="material-icons-sharp">grid_view</span>
+                    <h3>Dashboard</h3>
+                </a>
+                <a href="estoque.html" class="nav-link">
+                    <span class="material-icons-sharp">inventory_2</span>
+                    <h3>Estoque</h3>
+                </a>
+                <a href="vendas.html" class="nav-link active">
+                    <span class="material-icons-sharp">receipt_long</span>
+                    <h3>Vendas</h3>
+                </a>
+                <a href="#" id="theme-toggler-link">
+                    <span class="material-icons-sharp">light_mode</span>
+                    <h3>Tema</h3>
+                </a>
+                <a href="#" id="logout-btn">
+                    <span class="material-icons-sharp">logout</span>
+                    <h3>Sair</h3>
+                </a>
+            </div>
+        </aside>
+
+        <main>
+             <div class="top-bar">
+                 <div class="top-bar-left">
+                    <button id="menu-btn">
+                        <span class="material-icons-sharp">menu</span>
+                    </button>
+                    <h1 id="mobile-page-title">Vendas</h1>
+                </div>
+            </div>
+
+            <div id="vendas" class="main-content active">
+                <h1>Registrar Venda / Orçamento</h1>
+                <div class="card">
+                    <h2>Itens e Cliente</h2>
+                    <div class="form-container" id="form-vendas">
+                        <div class="input-group" style="grid-column: 1 / -1;">
+                            <label for="nomeCliente">Nome do Cliente</label>
+                            <input type="text" id="nomeCliente" placeholder="Opcional">
+                        </div>
+                        <div class="input-group">
+                            <label for="selectProdutoVenda">Adicionar Produto</label>
+                            <select id="selectProdutoVenda">
+                                <option value="">Cadastre um item no estoque primeiro</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="quantidadeVenda">Quantidade</label>
+                            <input type="number" id="quantidadeVenda" value="1" min="1">
+                        </div>
+                        <div class="input-group" style="grid-column: 1 / -1;">
+                            <button type="button" id="addItemOrcamento" style="width: auto; padding: 10px 30px;">Adicionar ao Orçamento</button>
+                        </div>
+                    </div>
+
+                    <h2 style="margin-top: 2rem;">Orçamento Atual</h2>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Produto</th>
+                                    <th>Qtd.</th>
+                                    <th>Preço Unit.</th>
+                                    <th>Subtotal</th>
+                                    <th>Ação</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orcamento-body"></tbody>
+                        </table>
+                    </div>
+
+                    <div style="text-align: right; margin-top: 1.5rem;">
+                        <h3>Subtotal: <span id="subtotal-venda">R$ 0,00</span></h3>
+                        <div style="display:inline-flex; align-items: center; gap: 10px; margin-top: 1rem;">
+                            <label for="descontoVenda">Desconto (R$):</label>
+                            <input type="text" class="currency" id="descontoVenda" style="width: 150px;" placeholder="0,00">
+                        </div>
+                        <h1 style="margin-top: 1rem;">Total: <span id="total-venda">R$ 0,00</span></h1>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Finalizar</h2>
+                    <div class="form-container">
+                        <div class="input-group">
+                            <label for="dataVenda">Data da Venda</label>
+                            <input type="text" id="dataVenda" readonly>
+                        </div>
+                        <div class="input-group">
+                            <label for="formaPagamento">Forma de Pagamento</label>
+                            <select id="formaPagamento">
+                                <option>Dinheiro</option><option>Pix</option><option>Crédito</option><option>Débito</option><option>Boleto</option><option>A Prazo</option>
+                            </select>
+                        </div>
+                        <div class="input-group" style="grid-column: 1 / -1;">
+                            <label>Ações</label>
+                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                                <button type="button" id="share-whatsapp" style="background-color: #25D366; display:flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <span class="material-icons-sharp">share</span> WhatsApp
+                                </button>
+                                <button type="button" id="registrar-venda-btn" class="btn-success" style="display:flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                    <span class="material-icons-sharp">check_circle</span> Registrar Venda
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2>Histórico de Vendas</h2>
+                    <input type="text" class="search-bar" id="pesquisa-venda-cliente" placeholder="Pesquisar por nome do cliente...">
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th><th>Data</th><th>Itens Vendidos</th><th>Forma Pag.</th><th>Valor Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historico-vendas-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Generic Notification Modal -->
+    <div class="modal-overlay" id="app-notification-modal">
+        <div class="modal-container" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="app-notification-title">Aviso</h2>
+                <button class="close-modal" id="app-notification-close-btn"><span class="material-icons-sharp">close</span></button>
+            </div>
+            <div class="modal-body">
+                <p id="app-notification-message" style="margin-bottom: 1.5rem;"></p>
+                <div id="app-notification-buttons" style="display: flex; justify-content: flex-end; gap: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp({
+                page: 'vendas',
+                init: () => {
+                    let orcamento = [];
+                    let todasAsVendas = [];
+
+                    // --- Currency Formatting ---
+                    document.querySelectorAll('.currency').forEach(input => {
+                        input.addEventListener('input', () => formatCurrency(input));
+                    });
+
+                    // --- Load Products into Select ---
+                    function carregarProdutosParaVenda() {
+                        const unsub = getUserCollection("produtos").orderBy("nome").onSnapshot((querySnapshot) => {
+                            const selectVenda = document.getElementById('selectProdutoVenda');
+                            selectVenda.innerHTML = '<option value="">Selecione um item do estoque</option>';
+                            querySnapshot.forEach((doc) => {
+                                const produto = doc.data();
+                                if (produto.quantidade > 0) {
+                                    const option = document.createElement('option');
+                                    option.value = doc.id;
+                                    option.textContent = `${produto.nome} (Estoque: ${produto.quantidade}) - R$ ${produto.valorVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                                    option.dataset.price = produto.valorVenda;
+                                    option.dataset.cost = produto.custo;
+                                    option.dataset.name = produto.nome;
+                                    selectVenda.appendChild(option);
+                                }
+                            });
+                        });
+                        firestoreUnsubscribes.push(unsub);
+                    }
+
+                    // --- Budget Logic ---
+                    function atualizarTabelaOrcamento() {
+                        const orcamentoBody = document.getElementById('orcamento-body');
+                        orcamentoBody.innerHTML = '';
+                        let subtotal = 0;
+
+                        orcamento.forEach((item, index) => {
+                            const itemSubtotal = item.qtd * item.preco;
+                            subtotal += itemSubtotal;
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${item.nome}</td>
+                                <td>${item.qtd}</td>
+                                <td>R$ ${item.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                <td>R$ ${itemSubtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                            `;
+                            const actionTd = document.createElement('td');
+                            actionTd.className = 'action-buttons';
+                            const removeBtn = document.createElement('button');
+                            removeBtn.className = 'btn-danger';
+                            removeBtn.innerHTML = `<span class="material-icons-sharp">close</span>`;
+                            removeBtn.onclick = () => {
+                                orcamento.splice(index, 1);
+                                atualizarTabelaOrcamento();
+                            };
+                            actionTd.appendChild(removeBtn);
+                            tr.appendChild(actionTd);
+                            orcamentoBody.appendChild(tr);
+                        });
+
+                        const descontoValor = parseFloat(document.getElementById('descontoVenda').value.replace(/\./g, '').replace(',', '.')) || 0;
+                        const total = subtotal - descontoValor;
+                        document.getElementById('subtotal-venda').textContent = `R$ ${subtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                        document.getElementById('total-venda').textContent = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                    }
+
+                    document.getElementById('addItemOrcamento').addEventListener('click', () => {
+                        const select = document.getElementById('selectProdutoVenda');
+                        const produtoId = select.value;
+                        if (!produtoId) return;
+                        const selectedOption = select.options[select.selectedIndex];
+                        orcamento.push({
+                            id: produtoId,
+                            nome: selectedOption.dataset.name,
+                            qtd: parseInt(document.getElementById('quantidadeVenda').value),
+                            preco: parseFloat(selectedOption.dataset.price),
+                            custo: parseFloat(selectedOption.dataset.cost)
+                        });
+                        atualizarTabelaOrcamento();
+                    });
+
+                    document.getElementById('descontoVenda').addEventListener('input', atualizarTabelaOrcamento);
+
+                    // --- Finalize Sale ---
+                    document.getElementById('registrar-venda-btn').addEventListener('click', () => {
+                        if (orcamento.length === 0) {
+                            showAppNotification('Adicione pelo menos um item para registrar a venda.');
+                            return;
+                        }
+                        const totalVenda = parseFloat(document.getElementById('total-venda').textContent.replace('R$ ', '').replace(/\./g, '').replace(',', '.'));
+                        const venda = {
+                            cliente: document.getElementById('nomeCliente').value || 'Não informado',
+                            data: firebase.firestore.FieldValue.serverTimestamp(),
+                            itens: orcamento,
+                            subtotal: parseFloat(document.getElementById('subtotal-venda').textContent.replace('R$ ', '').replace(/\./g, '').replace(',', '.')),
+                            desconto: parseFloat(document.getElementById('descontoVenda').value.replace(/\./g, '').replace(',', '.')) || 0,
+                            total: totalVenda,
+                            lucro: totalVenda - orcamento.reduce((total, item) => total + (item.custo * item.qtd), 0),
+                            formaPagamento: document.getElementById('formaPagamento').value
+                        };
+
+                        const batch = db.batch();
+                        batch.set(getUserCollection('vendas').doc(), venda);
+                        orcamento.forEach(item => {
+                            const produtoRef = getUserCollection('produtos').doc(item.id);
+                            batch.update(produtoRef, { quantidade: firebase.firestore.FieldValue.increment(-item.qtd) });
+                        });
+
+                        batch.commit().then(() => {
+                            showAppNotification('Venda registrada com sucesso!', 'Sucesso');
+                            orcamento = [];
+                            document.getElementById('nomeCliente').value = '';
+                            document.getElementById('descontoVenda').value = '';
+                            atualizarTabelaOrcamento();
+                        }).catch(error => console.error('Erro ao registrar a venda: ', error));
+                    });
+
+                    // --- Share on WhatsApp ---
+                    document.getElementById('share-whatsapp').addEventListener('click', () => {
+                        if (orcamento.length === 0) {
+                            showAppNotification('Adicione itens ao orçamento para compartilhar.');
+                            return;
+                        }
+                        let cliente = document.getElementById('nomeCliente').value || 'Cliente';
+                        let total = document.getElementById('total-venda').innerText;
+                        let texto = `*Orçamento para ${cliente}*\n\n`;
+                        orcamento.forEach(item => {
+                            texto += `- ${item.qtd}x ${item.nome}: R$ ${(item.qtd * item.preco).toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n`;
+                        });
+                        texto += `\n*Total: ${total}*`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+                    });
+
+                    // --- Sales History ---
+                    function carregarHistoricoVendas() {
+                        const unsub = getUserCollection('vendas').onSnapshot(snapshot => {
+                            todasAsVendas = [];
+                            snapshot.forEach(doc => todasAsVendas.push(doc.data()));
+                            todasAsVendas.sort((a, b) => (b.data ? b.data.toMillis() : 0) - (a.data ? a.data.toMillis() : 0));
+                            renderizarVendas(todasAsVendas);
+                        });
+                        firestoreUnsubscribes.push(unsub);
+                    }
+
+                    function renderizarVendas(vendasParaRenderizar) {
+                        const tabelaCorpo = document.getElementById('historico-vendas-body');
+                        tabelaCorpo.innerHTML = '';
+                        if (vendasParaRenderizar.length === 0) {
+                            tabelaCorpo.innerHTML = '<tr><td colspan="5">Nenhuma venda encontrada.</td></tr>';
+                            return;
+                        }
+                        vendasParaRenderizar.forEach(venda => {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td>${venda.cliente}</td>
+                                <td>${venda.data && venda.data.toDate ? venda.data.toDate().toLocaleDateString('pt-BR') : '...'}</td>
+                                <td>${venda.itens.map(item => `${item.qtd}x ${item.nome}`).join(', ')}</td>
+                                <td>${venda.formaPagamento || 'N/A'}</td>
+                                <td>R$ ${venda.total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                            `;
+                            tabelaCorpo.appendChild(tr);
+                        });
+                    }
+
+                    document.getElementById('pesquisa-venda-cliente').addEventListener('input', (e) => {
+                        const termo = e.target.value.toLowerCase().trim();
+                        const vendasFiltradas = termo ? todasAsVendas.filter(v => v.cliente.toLowerCase().includes(termo)) : todasAsVendas;
+                        renderizarVendas(vendasFiltradas);
+                    });
+
+                    // --- Initial Load ---
+                    document.getElementById('dataVenda').value = new Date().toLocaleDateString('pt-BR');
+                    carregarProdutosParaVenda();
+                    carregarHistoricoVendas();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

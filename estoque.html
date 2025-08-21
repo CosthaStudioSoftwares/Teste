@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stolinx - Estoque</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container visible">
+        <aside>
+            <div class="top">
+                <div class="logo">
+                    <h2>STOL<span class="danger">INX</span></h2>
+                </div>
+                <div class="close" id="close-btn">
+                    <span class="material-icons-sharp">close</span>
+                </div>
+            </div>
+            <div class="sidebar">
+                <a href="dashboard.html" class="nav-link">
+                    <span class="material-icons-sharp">grid_view</span>
+                    <h3>Dashboard</h3>
+                </a>
+                <a href="estoque.html" class="nav-link active">
+                    <span class="material-icons-sharp">inventory_2</span>
+                    <h3>Estoque</h3>
+                </a>
+                <a href="vendas.html" class="nav-link">
+                    <span class="material-icons-sharp">receipt_long</span>
+                    <h3>Vendas</h3>
+                </a>
+                <a href="#" id="theme-toggler-link">
+                    <span class="material-icons-sharp">light_mode</span>
+                    <h3>Tema</h3>
+                </a>
+                <a href="#" id="logout-btn">
+                    <span class="material-icons-sharp">logout</span>
+                    <h3>Sair</h3>
+                </a>
+            </div>
+        </aside>
+
+        <main>
+            <div class="top-bar">
+                 <div class="top-bar-left">
+                    <button id="menu-btn">
+                        <span class="material-icons-sharp">menu</span>
+                    </button>
+                    <h1 id="mobile-page-title">Estoque</h1>
+                </div>
+            </div>
+
+            <div id="estoque" class="main-content active">
+                <h1>Gerenciar Estoque</h1>
+                <div class="card">
+                    <h2>Cadastrar Novo Item</h2>
+                    <form class="form-container" id="form-cadastro-produto">
+                        <input type="hidden" id="editProductId">
+                        <div class="input-group">
+                            <label for="codigoProduto">Código do Produto</label>
+                            <input type="text" id="codigoProduto" placeholder="Ex: SB001" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="nomeProduto">Nome do Produto</label>
+                            <input type="text" id="nomeProduto" placeholder="Ex: Sabonete Líquido" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="validade">Validade</label>
+                            <input type="date" id="validade">
+                        </div>
+                        <div class="input-group">
+                            <label for="quantidade">Quantidade</label>
+                            <input type="number" id="quantidade" placeholder="Ex: 50" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="custoProduto">Custo do Produto</label>
+                            <input type="text" class="currency" id="custoProduto" placeholder="Digite o valor" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="valorVenda">Valor de Venda</label>
+                            <input type="text" class="currency" id="valorVenda" placeholder="Digite o valor" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="categoria">Categoria</label>
+                            <div style="display: flex; gap: 10px;">
+                                <select id="categoria" style="flex-grow: 1;"></select>
+                                <button type="button" id="open-category-modal" class="btn-warning" style="width: auto; padding: 0 15px;">
+                                    <span class="material-icons-sharp">settings</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="input-group" style="justify-content: flex-end;">
+                            <button type="submit" class="btn-success">Cadastrar Produto</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <h2>Itens em Estoque</h2>
+                    <input type="text" class="search-bar" id="searchEstoque" placeholder="Pesquisar...">
+                    <small class="search-instruction">Busque por nome, código, "vencendo" ou "repor".</small>
+                    <div class="table-wrapper">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Produto</th>
+                                    <th>Qtd.</th>
+                                    <th>Custo</th>
+                                    <th>Venda</th>
+                                    <th>Lucro/Un.</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabela-estoque-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Modals -->
+    <div class="modal-overlay" id="category-modal">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h2>Gerenciar Categorias</h2>
+                <button class="close-modal" id="close-category-modal"><span class="material-icons-sharp">close</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="nova-categoria-nome">Adicionar Nova Categoria</label>
+                    <div style="display: flex; gap: 10px;">
+                        <input type="text" id="nova-categoria-nome" placeholder="Nome da Categoria">
+                        <button id="add-categoria-btn" class="btn-success" style="width: auto;">Adicionar</button>
+                    </div>
+                </div>
+                <h3 style="margin-top: 2rem; margin-bottom: 1rem;">Categorias Existentes</h3>
+                <ul id="lista-categorias"></ul>
+            </div>
+        </div>
+    </div>
+    <div class="modal-overlay" id="app-notification-modal">
+        <div class="modal-container" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="app-notification-title">Aviso</h2>
+                <button class="close-modal" id="app-notification-close-btn"><span class="material-icons-sharp">close</span></button>
+            </div>
+            <div class="modal-body">
+                <p id="app-notification-message" style="margin-bottom: 1.5rem;"></p>
+                <div id="app-notification-buttons" style="display: flex; justify-content: flex-end; gap: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp({
+                page: 'estoque',
+                init: () => {
+                    const formCadastro = document.getElementById('form-cadastro-produto');
+                    const categoryModal = document.getElementById('category-modal');
+                    
+                    // --- Currency Formatting ---
+                    document.querySelectorAll('.currency').forEach(input => {
+                        input.addEventListener('input', () => formatCurrency(input));
+                    });
+
+                    // --- Category Modal Logic ---
+                    document.getElementById('open-category-modal').addEventListener('click', () => categoryModal.style.display = 'flex');
+                    document.getElementById('close-category-modal').addEventListener('click', () => categoryModal.style.display = 'none');
+                    categoryModal.addEventListener('click', (e) => { if (e.target === categoryModal) categoryModal.style.display = 'none'; });
+
+                    document.getElementById('add-categoria-btn').addEventListener('click', () => {
+                        const nomeInput = document.getElementById('nova-categoria-nome');
+                        const nomeCategoria = nomeInput.value.trim();
+                        if (nomeCategoria === "") {
+                            showAppNotification('Por favor, digite um nome para a categoria.');
+                            return;
+                        }
+                        getUserCollection("categorias").add({ nome: nomeCategoria })
+                            .then(() => { nomeInput.value = ""; })
+                            .catch(error => { console.error("Erro ao adicionar categoria: ", error); });
+                    });
+
+                    // --- Product Form Logic ---
+                    formCadastro.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        const produto = {
+                            codigo: formCadastro.codigoProduto.value,
+                            nome: formCadastro.nomeProduto.value,
+                            validade: formCadastro.validade.value,
+                            quantidade: parseInt(formCadastro.quantidade.value),
+                            custo: parseFloat(formCadastro.custoProduto.value.replace(/\./g, '').replace(',', '.')),
+                            valorVenda: parseFloat(formCadastro.valorVenda.value.replace(/\./g, '').replace(',', '.')),
+                            categoria: formCadastro.categoria.value,
+                        };
+                        produto.lucroUnidade = produto.valorVenda - produto.custo;
+                        const editId = formCadastro.editProductId.value;
+
+                        if (editId) {
+                            getUserCollection("produtos").doc(editId).update(produto)
+                                .then(() => {
+                                    showAppNotification("Produto atualizado com sucesso!", "Sucesso");
+                                    formCadastro.reset();
+                                    formCadastro.editProductId.value = '';
+                                    formCadastro.querySelector('button[type="submit"]').textContent = 'Cadastrar Produto';
+                                })
+                                .catch((error) => console.error("Erro ao atualizar: ", error));
+                        } else {
+                            produto.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                            getUserCollection("produtos").add(produto)
+                                .then(() => {
+                                    showAppNotification("Produto cadastrado com sucesso!", "Sucesso");
+                                    formCadastro.reset();
+                                })
+                                .catch((error) => console.error("Erro ao cadastrar: ", error));
+                        }
+                    });
+
+                    // --- Data Loading ---
+                    function carregarCategorias() {
+                        const unsub = getUserCollection("categorias").orderBy("nome").onSnapshot(snapshot => {
+                            const selectCategoria = document.getElementById('categoria');
+                            const listaCategoriasUl = document.getElementById('lista-categorias');
+                            selectCategoria.innerHTML = "";
+                            listaCategoriasUl.innerHTML = "";
+                            if (snapshot.empty) {
+                                selectCategoria.innerHTML = '<option>Nenhuma categoria</option>';
+                                listaCategoriasUl.innerHTML = '<li>Nenhuma categoria cadastrada.</li>';
+                                return;
+                            }
+                            snapshot.forEach(doc => {
+                                const categoria = doc.data();
+                                const option = document.createElement('option');
+                                option.value = categoria.nome;
+                                option.textContent = categoria.nome;
+                                selectCategoria.appendChild(option);
+
+                                const li = document.createElement('li');
+                                li.innerHTML = `<span>${categoria.nome}</span>`;
+                                const deleteBtn = document.createElement('button');
+                                deleteBtn.className = 'btn-danger';
+                                deleteBtn.innerHTML = `<span class="material-icons-sharp">delete</span>`;
+                                deleteBtn.onclick = () => showAppConfirmation(`Tem certeza que deseja excluir a categoria "${categoria.nome}"?`, () => {
+                                    getUserCollection("categorias").doc(doc.id).delete();
+                                });
+                                const actionDiv = document.createElement('div');
+                                actionDiv.className = 'action-buttons';
+                                actionDiv.appendChild(deleteBtn);
+                                li.appendChild(actionDiv);
+                                listaCategoriasUl.appendChild(li);
+                            });
+                        });
+                        firestoreUnsubscribes.push(unsub);
+                    }
+
+                    function carregarProdutos() {
+                        const unsub = getUserCollection("produtos").orderBy("nome").onSnapshot((querySnapshot) => {
+                            const tabelaCorpo = document.getElementById("tabela-estoque-body");
+                            tabelaCorpo.innerHTML = '';
+                            if (querySnapshot.empty) {
+                                tabelaCorpo.innerHTML = '<tr><td colspan="7">Nenhum produto cadastrado.</td></tr>';
+                                return;
+                            }
+                            const hoje = new Date();
+                            hoje.setHours(0, 0, 0, 0);
+
+                            querySnapshot.forEach((doc) => {
+                                const produto = doc.data();
+                                const lucroUnidade = produto.lucroUnidade || (produto.valorVenda - produto.custo);
+                                const tr = document.createElement('tr');
+                                
+                                let avisoVencimento = '';
+                                if (produto.validade) {
+                                    const [ano, mes, dia] = produto.validade.split('-').map(Number);
+                                    const dataValidade = new Date(ano, mes - 1, dia);
+                                    const diffDays = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
+                                    if (diffDays >= 0 && diffDays <= 30) {
+                                        tr.classList.add('vencimento-proximo');
+                                        avisoVencimento = `<span class="material-icons-sharp vencimento-aviso-icon" title="Vence em ${diffDays} dias!">warning</span>`;
+                                    }
+                                }
+                                
+                                tr.innerHTML = `
+                                    <td>${produto.codigo}</td>
+                                    <td>${produto.nome} ${avisoVencimento}</td>
+                                    <td class="${produto.quantidade < 3 ? 'low-stock-warning' : ''}">${produto.quantidade} ${produto.quantidade < 3 ? ' (Repor!)' : ''}</td>
+                                    <td>R$ ${produto.custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                    <td>R$ ${produto.valorVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                    <td>R$ ${lucroUnidade.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                `;
+                                const actionsTd = document.createElement('td');
+                                actionsTd.className = 'action-buttons';
+                                const editBtn = document.createElement('button');
+                                editBtn.className = 'btn-warning';
+                                editBtn.innerHTML = `<span class="material-icons-sharp">edit</span>`;
+                                editBtn.onclick = () => editarProduto(doc.id);
+                                const deleteBtn = document.createElement('button');
+                                deleteBtn.className = 'btn-danger';
+                                deleteBtn.innerHTML = `<span class="material-icons-sharp">delete</span>`;
+                                deleteBtn.onclick = () => showAppConfirmation(`Tem certeza que deseja excluir o produto "${produto.nome}"?`, () => {
+                                    getUserCollection("produtos").doc(doc.id).delete();
+                                });
+                                actionsTd.appendChild(editBtn);
+                                actionsTd.appendChild(deleteBtn);
+                                tr.appendChild(actionsTd);
+                                tabelaCorpo.appendChild(tr);
+                            });
+                        });
+                        firestoreUnsubscribes.push(unsub);
+                    }
+                    
+                    function editarProduto(id) {
+                        getUserCollection('produtos').doc(id).get().then(doc => {
+                            if (doc.exists) {
+                                const produto = doc.data();
+                                formCadastro.editProductId.value = id;
+                                formCadastro.codigoProduto.value = produto.codigo;
+                                formCadastro.nomeProduto.value = produto.nome;
+                                formCadastro.validade.value = produto.validade;
+                                formCadastro.quantidade.value = produto.quantidade;
+                                formCadastro.custoProduto.value = produto.custo.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                formCadastro.valorVenda.value = produto.valorVenda.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                                formCadastro.categoria.value = produto.categoria;
+                                formCadastro.querySelector('button[type="submit"]').textContent = 'Salvar Alterações';
+                                formCadastro.scrollIntoView({ behavior: 'smooth' });
+                            }
+                        });
+                    }
+
+                    // --- Search Logic ---
+                    document.getElementById('searchEstoque').addEventListener('keyup', (e) => {
+                        const filtro = e.target.value.toUpperCase();
+                        const linhas = document.querySelectorAll("#tabela-estoque-body tr");
+                        linhas.forEach(linha => {
+                            const celulas = linha.querySelectorAll("td");
+                            if (celulas.length < 2) return;
+                            const textoLinha = linha.textContent || linha.innerText;
+                            let exibir = textoLinha.toUpperCase().indexOf(filtro) > -1;
+                            if ("VENCENDO".indexOf(filtro) > -1 && linha.classList.contains('vencimento-proximo')) exibir = true;
+                            if ("REPOR".indexOf(filtro) > -1 && textoLinha.toUpperCase().includes('REPOR')) exibir = true;
+                            linha.style.display = exibir ? "" : "none";
+                        });
+                    });
+
+                    // --- Initial Load ---
+                    carregarCategorias();
+                    carregarProdutos();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

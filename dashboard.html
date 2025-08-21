@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stolinx - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container visible">
+        <aside>
+            <div class="top">
+                <div class="logo">
+                    <h2>STOL<span class="danger">INX</span></h2>
+                </div>
+                <div class="close" id="close-btn">
+                    <span class="material-icons-sharp">close</span>
+                </div>
+            </div>
+            <div class="sidebar">
+                <a href="dashboard.html" class="nav-link active">
+                    <span class="material-icons-sharp">grid_view</span>
+                    <h3>Dashboard</h3>
+                </a>
+                <a href="estoque.html" class="nav-link">
+                    <span class="material-icons-sharp">inventory_2</span>
+                    <h3>Estoque</h3>
+                </a>
+                <a href="vendas.html" class="nav-link">
+                    <span class="material-icons-sharp">receipt_long</span>
+                    <h3>Vendas</h3>
+                </a>
+                <a href="#" id="theme-toggler-link">
+                    <span class="material-icons-sharp">light_mode</span>
+                    <h3>Tema</h3>
+                </a>
+                <a href="#" id="logout-btn">
+                    <span class="material-icons-sharp">logout</span>
+                    <h3>Sair</h3>
+                </a>
+            </div>
+        </aside>
+
+        <main>
+            <div class="top-bar">
+                <div class="top-bar-left">
+                    <button id="menu-btn">
+                        <span class="material-icons-sharp">menu</span>
+                    </button>
+                    <h1 id="mobile-page-title">Dashboard</h1>
+                </div>
+            </div>
+
+            <div id="dashboard" class="main-content active">
+                <div class="dashboard-header">
+                    <h1 id="dashboard-title">Dashboard</h1>
+                    <div class="dashboard-filters">
+                        <select id="filtro-mes"></select>
+                        <select id="filtro-ano"></select>
+                        <button id="export-dashboard-btn" class="btn-success">
+                            <span class="material-icons-sharp">share</span>
+                        </button>
+                    </div>
+                </div>
+                <h2 id="welcome-message" class="text-muted" style="font-weight: 400; font-size: 1.2rem; margin-top: 0.5rem; margin-bottom: -0.5rem;"></h2>
+
+                <div class="insights">
+                    <div class="sales">
+                        <span class="material-icons-sharp">analytics</span>
+                        <div class="middle">
+                            <div>
+                                <h3>Faturamento do Período</h3>
+                                <h1 id="faturamento-mes">R$ 0,00</h1>
+                            </div>
+                        </div>
+                        <small class="text-muted">Total de vendas no período</small>
+                    </div>
+                    <div class="expenses">
+                        <span class="material-icons-sharp">bar_chart</span>
+                        <div class="middle">
+                            <div>
+                                <h3>Investimento (Estoque)</h3>
+                                <h1 id="investimento-mes">R$ 0,00</h1>
+                            </div>
+                        </div>
+                        <small class="text-muted">Custo total do estoque</small>
+                    </div>
+                    <div class="income">
+                        <span class="material-icons-sharp">stacked_line_chart</span>
+                        <div class="middle">
+                            <div>
+                                <h3>Lucro Potencial (Estoque)</h3>
+                                <h1 id="lucro-mes">R$ 0,00</h1>
+                            </div>
+                        </div>
+                        <small class="text-muted">Lucro de todo o estoque</small>
+                    </div>
+                </div>
+
+                <div class="dashboard-grid" style="margin-top: 1.5rem;">
+                    <div class="card">
+                        <h2>Vendas por Produto (Período)</h2>
+                        <div class="chart-container">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <h2>Produtos com Mais Saída (Período)</h2>
+                        <div class="table-wrapper">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Produto</th>
+                                        <th>Unidades Vendidas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="produtos-mais-saida-body">
+                                    <tr><td colspan="2">Nenhuma venda registrada.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Generic Notification Modal (reused from main.js) -->
+    <div class="modal-overlay" id="app-notification-modal">
+        <div class="modal-container" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2 id="app-notification-title">Aviso</h2>
+                <button class="close-modal" id="app-notification-close-btn">
+                    <span class="material-icons-sharp">close</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="app-notification-message" style="margin-bottom: 1.5rem;"></p>
+                <div id="app-notification-buttons" style="display: flex; justify-content: flex-end; gap: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeApp({
+                page: 'dashboard',
+                init: () => {
+                     // --- DASHBOARD SPECIFIC LOGIC ---
+                    let salesChartInstance;
+                    const filtroMes = document.getElementById('filtro-mes');
+                    const filtroAno = document.getElementById('filtro-ano');
+                    const exportBtn = document.getElementById('export-dashboard-btn');
+                    const dashboardTitle = document.getElementById('dashboard-title');
+
+                    function populateDateFilters() {
+                        const meses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+                        filtroMes.innerHTML = '<option value="all">Ano Inteiro</option>';
+                        meses.forEach((mes, index) => {
+                            filtroMes.innerHTML += `<option value="${index}">${mes}</option>`;
+                        });
+
+                        const anoAtual = new Date().getFullYear();
+                        filtroAno.innerHTML = '';
+                        for (let i = anoAtual; i >= anoAtual - 5; i--) {
+                            filtroAno.innerHTML += `<option value="${i}">${i}</option>`;
+                        }
+
+                        filtroMes.value = new Date().getMonth();
+                        filtroAno.value = anoAtual;
+                    }
+
+                    function atualizarDashboard() {
+                        const ano = parseInt(filtroAno.value);
+                        const mes = filtroMes.value;
+
+                        const faturamentoEl = document.getElementById('faturamento-mes');
+                        const investimentoEl = document.getElementById('investimento-mes');
+                        const lucroEl = document.getElementById('lucro-mes');
+                        const topSellersBody = document.getElementById('produtos-mais-saida-body');
+                        
+                        // --- CALCULA INVESTIMENTO TOTAL E LUCRO POTENCIAL (SEMPRE DO ESTOQUE ATUAL) ---
+                        const unsubEstoque = getUserCollection('produtos').onSnapshot(snapshot => {
+                            let investimentoTotal = 0;
+                            let lucroPotencialTotal = 0;
+                            snapshot.forEach(doc => {
+                                const p = doc.data();
+                                investimentoTotal += (p.custo || 0) * (p.quantidade || 0);
+                                lucroPotencialTotal += (p.valorVenda - p.custo) * (p.quantidade || 0);
+                            });
+                            investimentoEl.textContent = `R$ ${investimentoTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                            lucroEl.textContent = `R$ ${lucroPotencialTotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                        });
+                        firestoreUnsubscribes.push(unsubEstoque);
+
+                        // --- CALCULA FATURAMENTO E ITENS MAIS VENDIDOS DO PERÍODO SELECIONADO ---
+                        let primeiroDia, ultimoDia;
+                        if (mes === 'all') {
+                            primeiroDia = new Date(ano, 0, 1);
+                            ultimoDia = new Date(ano, 11, 31, 23, 59, 59);
+                            dashboardTitle.textContent = `Dashboard - Ano de ${ano}`;
+                        } else {
+                            primeiroDia = new Date(ano, parseInt(mes), 1);
+                            ultimoDia = new Date(ano, parseInt(mes) + 1, 0, 23, 59, 59);
+                            dashboardTitle.textContent = `Dashboard - ${filtroMes.options[filtroMes.selectedIndex].text} de ${ano}`;
+                        }
+
+                        const unsubVendas = getUserCollection('vendas')
+                            .where('data', '>=', primeiroDia)
+                            .where('data', '<=', ultimoDia)
+                            .onSnapshot(snapshot => {
+                                let faturamentoPeriodo = 0;
+                                const topSellers = {};
+
+                                snapshot.forEach(doc => {
+                                    const v = doc.data();
+                                    faturamentoPeriodo += v.total || 0;
+                                    if (v.itens) {
+                                        v.itens.forEach(item => {
+                                            topSellers[item.nome] = (topSellers[item.nome] || 0) + item.qtd;
+                                        });
+                                    }
+                                });
+
+                                faturamentoEl.textContent = `R$ ${faturamentoPeriodo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+
+                                const sortedTopSellers = Object.entries(topSellers).sort((a, b) => b[1] - a[1]);
+                                
+                                topSellersBody.innerHTML = '';
+                                if (sortedTopSellers.length === 0) {
+                                    topSellersBody.innerHTML = '<tr><td colspan="2">Nenhuma venda no período.</td></tr>';
+                                } else {
+                                    sortedTopSellers.slice(0, 5).forEach(([nome, quantidade]) => {
+                                        const tr = document.createElement('tr');
+                                        tr.innerHTML = `<td>${nome}</td><td>${quantidade}</td>`;
+                                        topSellersBody.appendChild(tr);
+                                    });
+                                }
+                                renderProductPieChart(sortedTopSellers);
+                            });
+                        firestoreUnsubscribes.push(unsubVendas);
+                    }
+                    
+                    function renderProductPieChart(topSellersData) {
+                        const ctx = document.getElementById('salesChart').getContext('2d');
+                        
+                        const labels = topSellersData.map(item => item[0]);
+                        const data = topSellersData.map(item => item[1]);
+
+                        if (salesChartInstance) {
+                            salesChartInstance.destroy();
+                        }
+
+                        salesChartInstance = new Chart(ctx, {
+                            type: 'pie',
+                            data: {
+                                labels: labels,
+                                datasets: [{
+                                    label: 'Unidades Vendidas',
+                                    data: data,
+                                    backgroundColor: ['rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)', 'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)'],
+                                    borderColor: ['rgba(255, 255, 255, 1)'],
+                                    borderWidth: 2
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { legend: { position: 'top' }, title: { display: false } }
+                            }
+                        });
+                    }
+
+                    async function exportDashboardData() {
+                        const periodo = dashboardTitle.textContent.replace('Dashboard - ', '');
+                        const faturamento = document.getElementById('faturamento-mes').textContent;
+                        const investimento = document.getElementById('investimento-mes').textContent;
+                        const lucro = document.getElementById('lucro-mes').textContent;
+                        
+                        let topSellersText = '';
+                        document.querySelectorAll('#produtos-mais-saida-body tr').forEach(row => {
+                            const cells = row.querySelectorAll('td');
+                            if(cells.length > 1) {
+                                topSellersText += `\n- ${cells[0].textContent}: ${cells[1].textContent} unidades`;
+                            } else {
+                                topSellersText = "\nNenhuma venda registrada no período.";
+                            }
+                        });
+
+                        const reportText = `*Relatório Stolinx - ${periodo}*\n\n- *Faturamento:* ${faturamento}\n- *Investimento (Estoque Atual):* ${investimento}\n- *Lucro Potencial (Estoque Atual):* ${lucro}\n\n*Produtos Mais Vendidos:*${topSellersText}`;
+
+                        if (navigator.share) {
+                            try {
+                                await navigator.share({ title: `Relatório Stolinx - ${periodo}`, text: reportText });
+                            } catch (err) { console.error('Erro ao compartilhar:', err); }
+                        } else {
+                            try {
+                                await navigator.clipboard.writeText(reportText);
+                                showAppNotification('Relatório copiado para a área de transferência!', 'Sucesso');
+                            } catch (err) {
+                                console.error('Falha ao copiar:', err);
+                                showAppNotification('Falha ao copiar o relatório.');
+                            }
+                        }
+                    }
+                    
+                    // --- INITIALIZATION ---
+                    filtroMes.addEventListener('change', atualizarDashboard);
+                    filtroAno.addEventListener('change', atualizarDashboard);
+                    exportBtn.addEventListener('click', exportDashboardData);
+
+                    populateDateFilters();
+                    atualizarDashboard();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
