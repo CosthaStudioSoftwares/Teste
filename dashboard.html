@@ -16,7 +16,7 @@
                 <div class="logo">
                     <h2>STOL<span class="danger">INX</span></h2>
                 </div>
-                <div class="close" id="close-btn">
+<div class="close" id="close-btn">
                     <span class="material-icons-sharp">close</span>
                 </div>
             </div>
@@ -60,11 +60,11 @@
                     <div class="dashboard-filters">
                         <select id="filtro-mes"></select>
                         <select id="filtro-ano"></select>
+                        <button id="export-dashboard-btn" title="Compartilhar Relatório">
+                            <span class="material-icons-sharp">share</span>
+                        </button>
                         <button id="export-pdf-btn" title="Baixar Relatório em PDF">
                             <span class="material-icons-sharp">picture_as_pdf</span>
-                        </button>
-                        <button id="export-dashboard-btn" class="btn-success" title="Compartilhar Relatório">
-                            <span class="material-icons-sharp">share</span>
                         </button>
                     </div>
                 </div>
@@ -349,6 +349,8 @@
                             theme: 'striped',
                             headStyles: { fillColor: [0, 150, 136] } // Cor Teal
                         });
+                        
+                        let finalY = doc.autoTable.previous.finalY;
 
                         // Tabela de Produtos Mais Vendidos
                         const topSellersRows = [];
@@ -360,30 +362,33 @@
                         });
                         
                         if(topSellersRows.length > 0) {
-                            doc.addPage();
                             doc.setFontSize(16);
                             doc.setFont('helvetica', 'bold');
-                            doc.text('Produtos Mais Vendidos no Período', 14, 20);
+                            doc.text('Produtos Mais Vendidos no Período', 14, finalY + 15);
                             doc.autoTable({
-                                startY: 25,
+                                startY: finalY + 20,
                                 head: [['Produto', 'Unidades Vendidas']],
                                 body: topSellersRows,
                                 theme: 'grid',
                                 headStyles: { fillColor: [0, 150, 136] }
                             });
+                            finalY = doc.autoTable.previous.finalY;
                         }
                         
                         // Gráfico (como imagem)
                         const chartCanvas = document.getElementById('salesChart');
                         if (chartCanvas && topSellersRows.length > 0) {
                             const chartImage = chartCanvas.toDataURL('image/png', 1.0);
-                             if (doc.internal.getNumberOfPages() === 1) {
+                            const chartHeight = 100;
+                            const spaceLeft = doc.internal.pageSize.height - finalY;
+                            if (chartHeight + 30 > spaceLeft) {
                                 doc.addPage();
+                                finalY = 0;
                             }
                             doc.setFontSize(16);
                             doc.setFont('helvetica', 'bold');
-                            doc.text('Gráfico de Vendas por Produto', 105, 20, { align: 'center' });
-                            doc.addImage(chartImage, 'PNG', 15, 30, 180, 100);
+                            doc.text('Gráfico de Vendas por Produto', 105, finalY + 20, { align: 'center' });
+                            doc.addImage(chartImage, 'PNG', 15, finalY + 25, 180, 100);
                         }
 
 
