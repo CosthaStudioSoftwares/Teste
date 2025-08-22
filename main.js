@@ -146,7 +146,7 @@ function setupCommonUI(user) {
     });
 
     if (localStorage.getItem('darkMode') === 'enabled') {
-        document.body.classList.add('dark-theme');
+    //    document.body.classList.add('dark-theme');    corrigindo erro na aplicação de tema
         themeTogglerLink.querySelector('span').textContent = 'dark_mode';
     }
 
@@ -177,4 +177,5 @@ function setupCommonUI(user) {
         });
     }
 }
+
 
