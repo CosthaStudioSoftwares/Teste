@@ -237,13 +237,15 @@
                             const itemSubtotal = item.qtd * item.preco;
                             subtotal += itemSubtotal;
                             const tr = document.createElement('tr');
+                            // MODIFICAÇÃO AQUI: Adicionado 'data-label' para responsividade
                             tr.innerHTML = `
-                                <td>${item.nome}</td>
-                                <td>${item.qtd}</td>
-                                <td>R$ ${item.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                <td>R$ ${itemSubtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                <td data-label="Produto">${item.nome}</td>
+                                <td data-label="Qtd.">${item.qtd}</td>
+                                <td data-label="Preço Unit.">R$ ${item.preco.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                <td data-label="Subtotal">R$ ${itemSubtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                             `;
                             const actionTd = document.createElement('td');
+                            actionTd.setAttribute('data-label', 'Ação'); // Adicionado data-label aqui também
                             actionTd.className = 'action-buttons';
                             const removeBtn = document.createElement('button');
                             removeBtn.className = 'btn-danger';
@@ -349,13 +351,14 @@
                         }
                         vendasParaRenderizar.forEach(venda => {
                             const tr = document.createElement('tr');
+                            // MODIFICAÇÃO AQUI: Adicionado 'data-label' para responsividade
                             tr.innerHTML = `
-                                <td>${venda.cliente}</td>
-                                <td>${venda.telefone || 'N/A'}</td>
-                                <td>${venda.data && venda.data.toDate ? venda.data.toDate().toLocaleDateString('pt-BR') : '...'}</td>
-                                <td>${venda.itens.map(item => `${item.qtd}x ${item.nome}`).join(', ')}</td>
-                                <td>${venda.formaPagamento || 'N/A'}</td>
-                                <td>R$ ${venda.total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                <td data-label="Cliente">${venda.cliente}</td>
+                                <td data-label="Telefone">${venda.telefone || 'N/A'}</td>
+                                <td data-label="Data">${venda.data && venda.data.toDate ? venda.data.toDate().toLocaleDateString('pt-BR') : '...'}</td>
+                                <td data-label="Itens Vendidos">${venda.itens.map(item => `${item.qtd}x ${item.nome}`).join(', ')}</td>
+                                <td data-label="Forma Pag.">${venda.formaPagamento || 'N/A'}</td>
+                                <td data-label="Valor Total">R$ ${venda.total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                             `;
                             tabelaCorpo.appendChild(tr);
                         });
