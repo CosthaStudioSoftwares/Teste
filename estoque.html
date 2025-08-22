@@ -342,15 +342,17 @@
                                     }
                                 }
                                 
+                                // MODIFICAÇÃO AQUI: Adicionado 'data-label' para responsividade
                                 tr.innerHTML = `
-                                    <td>${produto.codigo}</td>
-                                    <td>${produto.nome} ${avisoVencimento}</td>
-                                    <td class="${produto.quantidade < 3 ? 'low-stock-warning' : ''}">${produto.quantidade} ${produto.quantidade < 3 ? ' (Repor!)' : ''}</td>
-                                    <td>R$ ${produto.custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    <td>R$ ${produto.valorVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    <td>R$ ${lucroUnidade.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                    <td data-label="Código">${produto.codigo}</td>
+                                    <td data-label="Produto">${produto.nome} ${avisoVencimento}</td>
+                                    <td data-label="Qtd." class="${produto.quantidade < 3 ? 'low-stock-warning' : ''}">${produto.quantidade} ${produto.quantidade < 3 ? ' (Repor!)' : ''}</td>
+                                    <td data-label="Custo">R$ ${produto.custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                    <td data-label="Venda">R$ ${produto.valorVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                    <td data-label="Lucro/Un.">R$ ${lucroUnidade.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                                 `;
                                 const actionsTd = document.createElement('td');
+                                actionsTd.setAttribute('data-label', 'Ações'); // Adicionado data-label aqui também
                                 actionsTd.className = 'action-buttons';
                                 const editBtn = document.createElement('button');
                                 editBtn.className = 'btn-warning';
@@ -522,4 +524,3 @@
     </script>
 </body>
 </html>
-
