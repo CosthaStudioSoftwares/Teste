@@ -138,17 +138,26 @@ function setupCommonUI(user) {
 
     // --- Theme Toggler ---
     const themeTogglerLink = document.getElementById('theme-toggler-link');
+    
+    // Define o ícone correto na hora que a página carrega, evitando a "piscada"
+    if (document.documentElement.classList.contains('dark-theme')) {
+        themeTogglerLink.querySelector('span').textContent = 'dark_mode';
+    }
+
+    // Adiciona o evento de clique para alternar o tema
     themeTogglerLink.addEventListener('click', (e) => {
         e.preventDefault();
-        const isDark = document.body.classList.toggle('dark-theme');
+        
+        // Alterna a classe na tag <html>, que é o lugar correto agora
+        document.documentElement.classList.toggle('dark-theme');
+        
+        // Verifica qual é o novo estado do tema (claro ou escuro)
+        const isDark = document.documentElement.classList.contains('dark-theme');
+
+        // Atualiza o ícone e salva a preferência no localStorage
         themeTogglerLink.querySelector('span').textContent = isDark ? 'dark_mode' : 'light_mode';
         localStorage.setItem('darkMode', isDark ? 'enabled' : 'disabled');
     });
-
-    if (localStorage.getItem('darkMode') === 'enabled') {
-    //    document.body.classList.add('dark-theme');    corrigindo erro na aplicação de tema
-        themeTogglerLink.querySelector('span').textContent = 'dark_mode';
-    }
 
     // --- Logout ---
     document.getElementById('logout-btn').addEventListener('click', (e) => {
