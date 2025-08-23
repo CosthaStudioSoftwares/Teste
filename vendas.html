@@ -9,10 +9,44 @@
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.documentElement.classList.add('dark-theme');
     }
-</script>
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos adicionados para a paginação */
+        .pagination-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 0.5rem;
+        }
+        .pagination-button {
+            background-color: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: var(--border-radius-1);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 300ms ease;
+        }
+        .pagination-button:hover {
+            opacity: 0.8;
+        }
+        .pagination-button:disabled {
+            background-color: var(--color-light);
+            color: var(--color-dark-variant);
+            cursor: not-allowed;
+        }
+        .page-info {
+            font-size: 0.875rem;
+            color: var(--color-dark-variant);
+        }
+    </style>
 </head>
 <body>
     <div class="container visible">
@@ -168,6 +202,12 @@
                             <tbody id="historico-vendas-body"></tbody>
                         </table>
                     </div>
+                    <!-- Controles de Paginação Adicionados -->
+                    <div id="pagination-controls-vendas" class="pagination-container">
+                        <button id="prev-page-vendas" class="pagination-button">&lt;&lt;</button>
+                        <span id="page-info-vendas" class="page-info"></span>
+                        <button id="next-page-vendas" class="pagination-button">&gt;&gt;</button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -197,7 +237,11 @@
                 page: 'vendas',
                 init: () => {
                     let orcamento = [];
-                    let todasAsVendas = [];
+                    // --- VARIÁVEIS GLOBAIS PARA HISTÓRICO E PAGINAÇÃO ---
+                    let todasAsVendas = []; // Lista mestre com todas as vendas do Firestore
+                    let vendasFiltradas = []; // Lista usada para exibição (após busca/filtro)
+                    let currentPageVendas = 1; // Página atual
+                    const itemsPerPageVendas = 5; // Itens por página
 
                     document.querySelectorAll('.currency').forEach(input => {
                         input.addEventListener('input', () => formatCurrency(input));
@@ -243,7 +287,6 @@
                             const itemSubtotal = item.qtd * item.preco;
                             subtotal += itemSubtotal;
                             const tr = document.createElement('tr');
-                            // MODIFICAÇÃO AQUI: Adicionado 'data-label' para responsividade
                             tr.innerHTML = `
                                 <td data-label="Produto">${item.nome}</td>
                                 <td data-label="Qtd.">${item.qtd}</td>
@@ -251,7 +294,7 @@
                                 <td data-label="Subtotal">R$ ${itemSubtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
                             `;
                             const actionTd = document.createElement('td');
-                            actionTd.setAttribute('data-label', 'Ação'); // Adicionado data-label aqui também
+                            actionTd.setAttribute('data-label', 'Ação');
                             actionTd.className = 'action-buttons';
                             const removeBtn = document.createElement('button');
                             removeBtn.className = 'btn-danger';
@@ -338,26 +381,45 @@
                         window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
                     });
 
+                    // --- FUNÇÃO MODIFICADA PARA CARREGAR HISTÓRICO ---
                     function carregarHistoricoVendas() {
                         const unsub = getUserCollection('vendas').onSnapshot(snapshot => {
                             todasAsVendas = [];
                             snapshot.forEach(doc => todasAsVendas.push(doc.data()));
                             todasAsVendas.sort((a, b) => (b.data ? b.data.toMillis() : 0) - (a.data ? a.data.toMillis() : 0));
-                            renderizarVendas(todasAsVendas);
+                            filtrarErenderizarVendas(); // Chama a função de filtro/renderização
                         });
                         firestoreUnsubscribes.push(unsub);
                     }
 
-                    function renderizarVendas(vendasParaRenderizar) {
+                    // --- NOVA FUNÇÃO PARA RENDERIZAR A TABELA DE VENDAS COM PAGINAÇÃO ---
+                    function renderizarVendas() {
                         const tabelaCorpo = document.getElementById('historico-vendas-body');
+                        const pageInfo = document.getElementById("page-info-vendas");
+                        const prevButton = document.getElementById("prev-page-vendas");
+                        const nextButton = document.getElementById("next-page-vendas");
+                        
                         tabelaCorpo.innerHTML = '';
-                        if (vendasParaRenderizar.length === 0) {
+                        const totalPages = Math.ceil(vendasFiltradas.length / itemsPerPageVendas);
+
+                        if (currentPageVendas > totalPages) {
+                            currentPageVendas = totalPages > 0 ? totalPages : 1;
+                        }
+
+                        const startIndex = (currentPageVendas - 1) * itemsPerPageVendas;
+                        const endIndex = startIndex + itemsPerPageVendas;
+                        const paginatedItems = vendasFiltradas.slice(startIndex, endIndex);
+
+                        if (vendasFiltradas.length === 0) {
                             tabelaCorpo.innerHTML = '<tr><td colspan="6">Nenhuma venda encontrada.</td></tr>';
+                            pageInfo.textContent = 'Página 0 de 0';
+                            prevButton.disabled = true;
+                            nextButton.disabled = true;
                             return;
                         }
-                        vendasParaRenderizar.forEach(venda => {
+
+                        paginatedItems.forEach(venda => {
                             const tr = document.createElement('tr');
-                            // MODIFICAÇÃO AQUI: Adicionado 'data-label' para responsividade
                             tr.innerHTML = `
                                 <td data-label="Cliente">${venda.cliente}</td>
                                 <td data-label="Telefone">${venda.telefone || 'N/A'}</td>
@@ -368,6 +430,11 @@
                             `;
                             tabelaCorpo.appendChild(tr);
                         });
+
+                        // Atualiza os controles de paginação
+                        pageInfo.textContent = `Página ${currentPageVendas} de ${totalPages}`;
+                        prevButton.disabled = currentPageVendas === 1;
+                        nextButton.disabled = currentPageVendas === totalPages || totalPages === 0;
                     }
 
                     const pesquisaInput = document.getElementById('pesquisa-venda-cliente');
@@ -375,15 +442,16 @@
                     const filtroDataFim = document.getElementById('filtro-data-fim');
                     const limparFiltroBtn = document.getElementById('limpar-filtro-data');
 
-                    function filtrarVendas() {
+                    // --- FUNÇÃO MODIFICADA PARA FILTRAR E RENDERIZAR ---
+                    function filtrarErenderizarVendas() {
                         const termo = pesquisaInput.value.toLowerCase().trim();
                         const dataInicio = filtroDataInicio.value;
                         const dataFim = filtroDataFim.value;
 
-                        let vendasFiltradas = todasAsVendas;
+                        let vendasTemp = todasAsVendas;
 
                         if (termo) {
-                            vendasFiltradas = vendasFiltradas.filter(v => 
+                            vendasTemp = vendasTemp.filter(v => 
                                 v.cliente.toLowerCase().includes(termo) || 
                                 (v.telefone && v.telefone.replace(/\D/g, '').includes(termo.replace(/\D/g, '')))
                             );
@@ -391,7 +459,7 @@
 
                         if (dataInicio) {
                             const inicio = new Date(dataInicio + 'T00:00:00');
-                            vendasFiltradas = vendasFiltradas.filter(v => {
+                            vendasTemp = vendasTemp.filter(v => {
                                 if (!v.data || !v.data.toDate) return false;
                                 return v.data.toDate() >= inicio;
                             });
@@ -399,24 +467,41 @@
                         
                         if (dataFim) {
                              const fim = new Date(dataFim + 'T23:59:59');
-                             vendasFiltradas = vendasFiltradas.filter(v => {
+                             vendasTemp = vendasTemp.filter(v => {
                                 if (!v.data || !v.data.toDate) return false;
                                 return v.data.toDate() <= fim;
                             });
                         }
 
-                        renderizarVendas(vendasFiltradas);
+                        vendasFiltradas = vendasTemp;
+                        currentPageVendas = 1; // Reseta para a primeira página
+                        renderizarVendas(); // Chama a renderização
                     }
 
-                    pesquisaInput.addEventListener('input', filtrarVendas);
-                    filtroDataInicio.addEventListener('change', filtrarVendas);
-                    filtroDataFim.addEventListener('change', filtrarVendas);
+                    pesquisaInput.addEventListener('input', filtrarErenderizarVendas);
+                    filtroDataInicio.addEventListener('change', filtrarErenderizarVendas);
+                    filtroDataFim.addEventListener('change', filtrarErenderizarVendas);
                     limparFiltroBtn.addEventListener('click', () => {
                         filtroDataInicio.value = '';
                         filtroDataFim.value = '';
-                        filtrarVendas();
+                        filtrarErenderizarVendas();
                     });
 
+                    // --- LISTENERS PARA OS BOTÕES DE PAGINAÇÃO DE VENDAS ---
+                    document.getElementById('prev-page-vendas').addEventListener('click', () => {
+                        if (currentPageVendas > 1) {
+                            currentPageVendas--;
+                            renderizarVendas();
+                        }
+                    });
+
+                    document.getElementById('next-page-vendas').addEventListener('click', () => {
+                        const totalPages = Math.ceil(vendasFiltradas.length / itemsPerPageVendas);
+                        if (currentPageVendas < totalPages) {
+                            currentPageVendas++;
+                            renderizarVendas();
+                        }
+                    });
 
                     // --- Initial Load ---
                     document.getElementById('dataVenda').value = new Date().toLocaleDateString('pt-BR');
@@ -428,4 +513,3 @@
     </script>
 </body>
 </html>
-
