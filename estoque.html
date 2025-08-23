@@ -9,10 +9,44 @@
     if (localStorage.getItem('darkMode') === 'enabled') {
         document.documentElement.classList.add('dark-theme');
     }
-</script>
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos adicionados para a paginação */
+        .pagination-container {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1rem;
+            padding: 0.5rem;
+        }
+        .pagination-button {
+            background-color: var(--color-primary);
+            color: var(--color-white);
+            border: none;
+            border-radius: var(--border-radius-1);
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 500;
+            transition: all 300ms ease;
+        }
+        .pagination-button:hover {
+            opacity: 0.8;
+        }
+        .pagination-button:disabled {
+            background-color: var(--color-light);
+            color: var(--color-dark-variant);
+            cursor: not-allowed;
+        }
+        #page-info {
+            font-size: 0.875rem;
+            color: var(--color-dark-variant);
+        }
+    </style>
 </head>
 <body>
     <div class="container visible">
@@ -129,6 +163,12 @@
                             <tbody id="tabela-estoque-body"></tbody>
                         </table>
                     </div>
+                    <!-- Controles de Paginação Adicionados -->
+                    <div id="pagination-controls" class="pagination-container">
+                        <button id="prev-page" class="pagination-button">&lt;&lt;</button>
+                        <span id="page-info"></span>
+                        <button id="next-page" class="pagination-button">&gt;&gt;</button>
+                    </div>
                 </div>
             </div>
         </main>
@@ -179,8 +219,13 @@
             initializeApp({
                 page: 'estoque',
                 init: () => {
-                    let todosOsProdutos = [];
+                    // --- VARIÁVEIS GLOBAIS PARA ESTOQUE E PAGINAÇÃO ---
+                    let todosOsProdutos = []; // Lista mestre com todos os produtos do Firestore
+                    let produtosFiltrados = []; // Lista usada para exibição (após busca/filtro)
                     let todasAsCategorias = [];
+                    let currentPage = 1; // Página atual
+                    const itemsPerPage = 5; // Itens por página
+
                     const formCadastro = document.getElementById('form-cadastro-produto');
                     const categoryModal = document.getElementById('category-modal');
                     
@@ -227,14 +272,14 @@
 
                             let codigoExists = false;
                             codigoSnapshot.forEach(doc => {
-                                if (doc.id !== editId) { // Garante que não é o mesmo produto sendo editado
+                                if (doc.id !== editId) {
                                     codigoExists = true;
                                 }
                             });
 
                             let nomeExists = false;
                             nomeSnapshot.forEach(doc => {
-                                if (doc.id !== editId) { // Garante que não é o mesmo produto sendo editado
+                                if (doc.id !== editId) {
                                     nomeExists = true;
                                 }
                             });
@@ -313,6 +358,7 @@
                         firestoreUnsubscribes.push(unsub);
                     }
 
+                    // --- FUNÇÃO MODIFICADA PARA CARREGAR PRODUTOS ---
                     function carregarProdutos() {
                         const unsub = getUserCollection("produtos").onSnapshot((querySnapshot) => {
                             let produtosTemp = [];
@@ -320,65 +366,130 @@
                                 produtosTemp.push({ id: doc.id, ...doc.data() });
                             });
 
-                            // Ordena os produtos em ordem alfabética (insensível a maiúsculas/minúsculas)
                             todosOsProdutos = produtosTemp.sort((a, b) => {
                                 return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' });
                             });
-
-                            const tabelaCorpo = document.getElementById("tabela-estoque-body");
-                            tabelaCorpo.innerHTML = '';
-                            if (todosOsProdutos.length === 0) {
-                                tabelaCorpo.innerHTML = '<tr><td colspan="7">Nenhum produto cadastrado.</td></tr>';
-                                return;
-                            }
-                            const hoje = new Date();
-                            hoje.setHours(0, 0, 0, 0);
-
-                            todosOsProdutos.forEach((produto) => {
-                                const lucroUnidade = produto.lucroUnidade || (produto.valorVenda - produto.custo);
-                                const tr = document.createElement('tr');
-                                
-                                let avisoVencimento = '';
-                                if (produto.validade) {
-                                    const dataValidade = new Date(produto.validade + 'T00:00:00');
-                                    const diffDays = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
-                                    if (diffDays >= 0 && diffDays <= 30) {
-                                        tr.classList.add('vencimento-proximo');
-                                        avisoVencimento = `<span class="material-icons-sharp vencimento-aviso-icon" title="Vence em ${diffDays} dias!">warning</span>`;
-                                    }
-                                }
-                                
-                                // MODIFICAÇÃO AQUI: Adicionado 'data-label' para responsividade
-                                tr.innerHTML = `
-                                    <td data-label="Código">${produto.codigo}</td>
-                                    <td data-label="Produto">${produto.nome} ${avisoVencimento}</td>
-                                    <td data-label="Qtd." class="${produto.quantidade < 3 ? 'low-stock-warning' : ''}">${produto.quantidade} ${produto.quantidade < 3 ? ' (Repor!)' : ''}</td>
-                                    <td data-label="Custo">R$ ${produto.custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    <td data-label="Venda">R$ ${produto.valorVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                    <td data-label="Lucro/Un.">R$ ${lucroUnidade.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
-                                `;
-                                const actionsTd = document.createElement('td');
-                                actionsTd.setAttribute('data-label', 'Ações'); // Adicionado data-label aqui também
-                                actionsTd.className = 'action-buttons';
-                                const editBtn = document.createElement('button');
-                                editBtn.className = 'btn-warning';
-                                editBtn.innerHTML = `<span class="material-icons-sharp">edit</span>`;
-                                editBtn.onclick = () => editarProduto(produto.id);
-                                const deleteBtn = document.createElement('button');
-                                deleteBtn.className = 'btn-danger';
-                                deleteBtn.innerHTML = `<span class="material-icons-sharp">delete</span>`;
-                                deleteBtn.onclick = () => showAppConfirmation(`Tem certeza que deseja excluir o produto "${produto.nome}"?`, () => {
-                                    getUserCollection("produtos").doc(produto.id).delete();
-                                });
-                                actionsTd.appendChild(editBtn);
-                                actionsTd.appendChild(deleteBtn);
-                                tr.appendChild(actionsTd);
-                                tabelaCorpo.appendChild(tr);
-                            });
+                            
+                            // Após carregar, aplica o filtro atual (se houver) e renderiza a tabela
+                            filtrarErenderizar();
                         });
                         firestoreUnsubscribes.push(unsub);
                     }
                     
+                    // --- NOVA FUNÇÃO PARA RENDERIZAR A TABELA COM PAGINAÇÃO ---
+                    function renderizarTabelaEstoque() {
+                        const tabelaCorpo = document.getElementById("tabela-estoque-body");
+                        const pageInfo = document.getElementById("page-info");
+                        const prevButton = document.getElementById("prev-page");
+                        const nextButton = document.getElementById("next-page");
+
+                        tabelaCorpo.innerHTML = '';
+                        const totalPages = Math.ceil(produtosFiltrados.length / itemsPerPage);
+                        
+                        // Garante que a página atual não seja maior que o total de páginas
+                        if (currentPage > totalPages) {
+                            currentPage = totalPages > 0 ? totalPages : 1;
+                        }
+
+                        const startIndex = (currentPage - 1) * itemsPerPage;
+                        const endIndex = startIndex + itemsPerPage;
+                        const paginatedItems = produtosFiltrados.slice(startIndex, endIndex);
+
+                        if (produtosFiltrados.length === 0) {
+                            tabelaCorpo.innerHTML = '<tr><td colspan="7">Nenhum produto encontrado.</td></tr>';
+                            pageInfo.textContent = 'Página 0 de 0';
+                            prevButton.disabled = true;
+                            nextButton.disabled = true;
+                            return;
+                        }
+
+                        const hoje = new Date();
+                        hoje.setHours(0, 0, 0, 0);
+
+                        paginatedItems.forEach((produto) => {
+                            const lucroUnidade = produto.lucroUnidade || (produto.valorVenda - produto.custo);
+                            const tr = document.createElement('tr');
+                            
+                            let avisoVencimento = '';
+                            if (produto.validade) {
+                                const dataValidade = new Date(produto.validade + 'T00:00:00');
+                                const diffDays = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
+                                if (diffDays >= 0 && diffDays <= 30) {
+                                    tr.classList.add('vencimento-proximo');
+                                    avisoVencimento = `<span class="material-icons-sharp vencimento-aviso-icon" title="Vence em ${diffDays} dias!">warning</span>`;
+                                }
+                            }
+                            
+                            tr.innerHTML = `
+                                <td data-label="Código">${produto.codigo}</td>
+                                <td data-label="Produto">${produto.nome} ${avisoVencimento}</td>
+                                <td data-label="Qtd." class="${produto.quantidade < 3 ? 'low-stock-warning' : ''}">${produto.quantidade} ${produto.quantidade < 3 ? ' (Repor!)' : ''}</td>
+                                <td data-label="Custo">R$ ${produto.custo.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                <td data-label="Venda">R$ ${produto.valorVenda.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                                <td data-label="Lucro/Un.">R$ ${lucroUnidade.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td>
+                            `;
+                            const actionsTd = document.createElement('td');
+                            actionsTd.setAttribute('data-label', 'Ações');
+                            actionsTd.className = 'action-buttons';
+                            const editBtn = document.createElement('button');
+                            editBtn.className = 'btn-warning';
+                            editBtn.innerHTML = `<span class="material-icons-sharp">edit</span>`;
+                            editBtn.onclick = () => editarProduto(produto.id);
+                            const deleteBtn = document.createElement('button');
+                            deleteBtn.className = 'btn-danger';
+                            deleteBtn.innerHTML = `<span class="material-icons-sharp">delete</span>`;
+                            deleteBtn.onclick = () => showAppConfirmation(`Tem certeza que deseja excluir o produto "${produto.nome}"?`, () => {
+                                getUserCollection("produtos").doc(produto.id).delete();
+                            });
+                            actionsTd.appendChild(editBtn);
+                            actionsTd.appendChild(deleteBtn);
+                            tr.appendChild(actionsTd);
+                            tabelaCorpo.appendChild(tr);
+                        });
+
+                        // Atualiza os controles de paginação
+                        pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+                        prevButton.disabled = currentPage === 1;
+                        nextButton.disabled = currentPage === totalPages || totalPages === 0;
+                    }
+
+                    // --- NOVA FUNÇÃO PARA FILTRAR OS PRODUTOS ---
+                    function filtrarErenderizar() {
+                        const filtro = document.getElementById('searchEstoque').value.toUpperCase();
+                        
+                        if (!filtro) {
+                            produtosFiltrados = [...todosOsProdutos];
+                        } else {
+                            const hoje = new Date();
+                            hoje.setHours(0, 0, 0, 0);
+
+                            produtosFiltrados = todosOsProdutos.filter(produto => {
+                                // Verifica correspondência direta no código ou nome
+                                if (produto.codigo.toUpperCase().includes(filtro) || produto.nome.toUpperCase().includes(filtro)) {
+                                    return true;
+                                }
+                                
+                                // Verifica pela palavra-chave "VENCENDO"
+                                if ("VENCENDO".startsWith(filtro)) {
+                                    if (produto.validade) {
+                                        const dataValidade = new Date(produto.validade + 'T00:00:00');
+                                        const diffDays = Math.ceil((dataValidade - hoje) / (1000 * 60 * 60 * 24));
+                                        if (diffDays >= 0 && diffDays <= 30) return true;
+                                    }
+                                }
+
+                                // Verifica pela palavra-chave "REPOR"
+                                if ("REPOR".startsWith(filtro)) {
+                                    if (produto.quantidade < 3) return true;
+                                }
+                                
+                                return false;
+                            });
+                        }
+                        
+                        renderizarTabelaEstoque();
+                    }
+
                     function editarProduto(id) {
                         getUserCollection('produtos').doc(id).get().then(doc => {
                             if (doc.exists) {
@@ -397,18 +508,26 @@
                         });
                     }
 
-                    document.getElementById('searchEstoque').addEventListener('keyup', (e) => {
-                        const filtro = e.target.value.toUpperCase();
-                        const linhas = document.querySelectorAll("#tabela-estoque-body tr");
-                        linhas.forEach(linha => {
-                            const celulas = linha.querySelectorAll("td");
-                            if (celulas.length < 2) return;
-                            const textoLinha = linha.textContent || linha.innerText;
-                            let exibir = textoLinha.toUpperCase().indexOf(filtro) > -1;
-                            if ("VENCENDO".indexOf(filtro) > -1 && linha.classList.contains('vencimento-proximo')) exibir = true;
-                            if ("REPOR".indexOf(filtro) > -1 && textoLinha.toUpperCase().includes('REPOR')) exibir = true;
-                            linha.style.display = exibir ? "" : "none";
-                        });
+                    // --- LISTENER DE BUSCA MODIFICADO ---
+                    document.getElementById('searchEstoque').addEventListener('keyup', () => {
+                        currentPage = 1; // Reseta para a primeira página a cada nova busca
+                        filtrarErenderizar();
+                    });
+
+                    // --- LISTENERS PARA OS BOTÕES DE PAGINAÇÃO ---
+                    document.getElementById('prev-page').addEventListener('click', () => {
+                        if (currentPage > 1) {
+                            currentPage--;
+                            renderizarTabelaEstoque();
+                        }
+                    });
+
+                    document.getElementById('next-page').addEventListener('click', () => {
+                        const totalPages = Math.ceil(produtosFiltrados.length / itemsPerPage);
+                        if (currentPage < totalPages) {
+                            currentPage++;
+                            renderizarTabelaEstoque();
+                        }
                     });
 
                     function exportEstoquePDF() {
@@ -521,13 +640,13 @@
                         doc.save(`Relatorio_Estoque_Stolinx_${new Date().toISOString().slice(0,10)}.pdf`);
                     }
 
+                    // --- INICIALIZAÇÃO ---
                     document.getElementById('export-estoque-pdf-btn').addEventListener('click', exportEstoquePDF);
                     carregarCategorias();
-                    carregarProdutos();
+                    carregarProdutos(); // Esta função agora cuida da renderização inicial
                 }
             });
         });
     </script>
 </body>
 </html>
-
