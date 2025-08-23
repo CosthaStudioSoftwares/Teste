@@ -47,6 +47,33 @@
             color: var(--color-dark-variant);
         }
     </style>
+
+    <!-- Adicione estas linhas dentro da tag <head> -->
+
+<!-- Cor da barra de status em navegadores mobile -->
+<meta name="theme-color" content="#009688">
+
+<!-- Link para o manifest.json -->
+<link rel="manifest" href="manifest.json">
+
+<!-- Ícone para dispositivos Apple -->
+<link rel="apple-touch-icon" href="icon-192x192.png">
+
+<!-- Script para registrar o Service Worker -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registrado com sucesso:', registration);
+                })
+                .catch(error => {
+                    console.log('Falha ao registrar o Service Worker:', error);
+                });
+        });
+    }
+</script>
+
 </head>
 <body>
     <div class="container visible">
@@ -650,3 +677,4 @@
     </script>
 </body>
 </html>
+
