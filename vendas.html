@@ -112,13 +112,23 @@
 
         <main>
              <div class="top-bar">
-                 <div class="top-bar-left">
-                    <button id="menu-btn">
-                        <span class="material-icons-sharp">menu</span>
-                    </button>
-                    <h1 id="mobile-page-title">Vendas</h1>
+                   <div class="top-bar-left">
+                       <button id="menu-btn">
+                           <span class="material-icons-sharp">menu</span>
+                       </button>
+                       <h1 id="mobile-page-title">Vendas</h1>
+                   </div>
+             </div>
+             
+             <!-- NOVO CARD DE PEDIDOS PENDENTES -->
+             <div id="pedidos-pendentes-container" class="card" style="display: none;">
+                <h2>Pedidos Pendentes
+                    <span id="contador-pedidos" class="notification-badge">0</span>
+                </h2>
+                <div id="lista-pedidos-pendentes">
+                    <p class="text-muted">Nenhum pedido pendente no momento.</p>
                 </div>
-            </div>
+             </div>
 
             <div id="vendas" class="main-content active">
                 <h1>Registrar Venda / Orçamento</h1>
@@ -137,11 +147,11 @@
                         <div class="input-group" style="grid-column: 1 / -1;">
                              <label for="selectProdutoVenda">Adicionar Produto</label>
                              <div style="display: flex; gap: 1rem;">
-                                <select id="selectProdutoVenda" style="flex-grow: 1;">
-                                    <option value="">Cadastre um item no estoque primeiro</option>
-                                </select>
-                                <input type="number" id="quantidadeVenda" value="1" min="1" style="max-width: 100px;">
-                             </div>
+                                 <select id="selectProdutoVenda" style="flex-grow: 1;">
+                                     <option value="">Cadastre um item no estoque primeiro</option>
+                                 </select>
+                                 <input type="number" id="quantidadeVenda" value="1" min="1" style="max-width: 100px;">
+                               </div>
                         </div>
 
                         <div class="input-group" style="grid-column: 1 / -1;">
@@ -165,13 +175,18 @@
                         </table>
                     </div>
 
-                    <div style="text-align: right; margin-top: 1.5rem;">
+                    <!-- SEÇÃO DE TOTAIS MODIFICADA -->
+                    <div class="total-section">
                         <h3>Subtotal: <span id="subtotal-venda">R$ 0,00</span></h3>
-                        <div style="display:inline-flex; align-items: center; gap: 10px; margin-top: 1rem;">
+                        <div class="desconto-group">
                             <label for="descontoVenda">Desconto (R$):</label>
-                            <input type="text" class="currency" id="descontoVenda" style="width: 150px;" placeholder="0,00">
+                            <input type="text" class="currency" id="descontoVenda" placeholder="0,00">
                         </div>
-                        <h1 style="margin-top: 1rem;">Total: <span id="total-venda">R$ 0,00</span></h1>
+                        <div class="desconto-group">
+                            <label for="descontoPorcentagem">Desconto (%):</label>
+                            <input type="number" id="descontoPorcentagem" placeholder="0">
+                        </div>
+                        <h1 class="total-final">Total: <span id="total-venda">R$ 0,00</span></h1>
                     </div>
                 </div>
 
@@ -190,11 +205,15 @@
                         </div>
                         <div class="input-group" style="grid-column: 1 / -1;">
                             <label>Ações</label>
-                            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                                <button type="button" id="share-whatsapp" style="background-color: #25D366; display:flex; align-items: center; justify-content: center; gap: 0.5rem;">
-                                    <span class="material-icons-sharp">share</span> WhatsApp
+                            <div class="action-buttons-grid">
+                                <!-- BOTÃO NOVO -->
+                                <button type="button" id="share-pedido-link-btn" style="background: var(--color-primary);">
+                                    <span class="material-icons-sharp">link</span> Enviar Link de Pedido
                                 </button>
-                                <button type="button" id="registrar-venda-btn" class="btn-success" style="display:flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <button type="button" id="share-whatsapp" style="background-color: #25D366;">
+                                    <span class="material-icons-sharp">share</span> Orçamento via WhatsApp
+                                </button>
+                                <button type="button" id="registrar-venda-btn" class="btn-success">
                                     <span class="material-icons-sharp">check_circle</span> Registrar Venda
                                 </button>
                             </div>
@@ -264,17 +283,16 @@
                 page: 'vendas',
                 init: () => {
                     let orcamento = [];
-                    // --- VARIÁVEIS GLOBAIS PARA HISTÓRICO E PAGINAÇÃO ---
-                    let todasAsVendas = []; // Lista mestre com todas as vendas do Firestore
-                    let vendasFiltradas = []; // Lista usada para exibição (após busca/filtro)
-                    let currentPageVendas = 1; // Página atual
-                    const itemsPerPageVendas = 5; // Itens por página
+                    let todasAsVendas = [], vendasFiltradas = [];
+                    let currentPageVendas = 1;
+                    const itemsPerPageVendas = 5;
+                    const descontoManualInput = document.getElementById('descontoVenda');
+                    const descontoPercentInput = document.getElementById('descontoPorcentagem');
 
                     document.querySelectorAll('.currency').forEach(input => {
                         input.addEventListener('input', () => formatCurrency(input));
                     });
                     
-                    // --- Phone Formatting ---
                     const telefoneInput = document.getElementById('telefoneCliente');
                     telefoneInput.addEventListener('input', (e) => {
                         let value = e.target.value.replace(/\D/g, '');
@@ -283,7 +301,6 @@
                         value = value.replace(/(\d)(\d{4})$/, '$1-$2');
                         e.target.value = value;
                     });
-
 
                     function carregarProdutosParaVenda() {
                         const unsub = getUserCollection("produtos").orderBy("nome").onSnapshot((querySnapshot) => {
@@ -334,12 +351,38 @@
                             tr.appendChild(actionTd);
                             orcamentoBody.appendChild(tr);
                         });
-
-                        const descontoValor = parseFloat(document.getElementById('descontoVenda').value.replace(/\./g, '').replace(',', '.')) || 0;
-                        const total = subtotal - descontoValor;
+                        
                         document.getElementById('subtotal-venda').textContent = `R$ ${subtotal.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+                        
+                        // Lógica de Desconto
+                        let descontoValor = parseFloat(descontoManualInput.value.replace(/\./g, '').replace(',', '.')) || 0;
+                        let descontoPercent = parseFloat(descontoPercentInput.value) || 0;
+                        let descontoFinal = 0;
+
+                        if (descontoPercent > 0) {
+                            descontoFinal = subtotal * (descontoPercent / 100);
+                            // Atualiza o campo de valor para refletir a porcentagem, mas não dispara o evento de input
+                            const valorFormatado = (descontoFinal).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                            if (descontoManualInput.value !== valorFormatado) {
+                                descontoManualInput.value = valorFormatado;
+                            }
+                        } else {
+                            descontoFinal = descontoValor;
+                        }
+
+                        const total = subtotal - descontoFinal;
                         document.getElementById('total-venda').textContent = `R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
                     }
+
+                    descontoManualInput.addEventListener('input', () => {
+                        descontoPercentInput.value = ''; // Limpa o campo de porcentagem
+                        atualizarTabelaOrcamento();
+                    });
+
+                    descontoPercentInput.addEventListener('input', () => {
+                         // Não precisa limpar o manual, a lógica em atualizarTabelaOrcamento já recalcula
+                        atualizarTabelaOrcamento();
+                    });
 
                     document.getElementById('addItemOrcamento').addEventListener('click', () => {
                         const select = document.getElementById('selectProdutoVenda');
@@ -356,8 +399,6 @@
                         atualizarTabelaOrcamento();
                     });
 
-                    document.getElementById('descontoVenda').addEventListener('input', atualizarTabelaOrcamento);
-
                     document.getElementById('registrar-venda-btn').addEventListener('click', () => {
                         if (orcamento.length === 0) {
                             showAppNotification('Adicione pelo menos um item para registrar a venda.');
@@ -370,7 +411,7 @@
                             data: firebase.firestore.FieldValue.serverTimestamp(),
                             itens: orcamento,
                             subtotal: parseFloat(document.getElementById('subtotal-venda').textContent.replace('R$ ', '').replace(/\./g, '').replace(',', '.')),
-                            desconto: parseFloat(document.getElementById('descontoVenda').value.replace(/\./g, '').replace(',', '.')) || 0,
+                            desconto: totalVenda - orcamento.reduce((acc, item) => acc + (item.preco * item.qtd), 0),
                             total: totalVenda,
                             lucro: totalVenda - orcamento.reduce((total, item) => total + (item.custo * item.qtd), 0),
                             formaPagamento: document.getElementById('formaPagamento').value
@@ -388,7 +429,8 @@
                             orcamento = [];
                             document.getElementById('nomeCliente').value = '';
                             document.getElementById('telefoneCliente').value = '';
-                            document.getElementById('descontoVenda').value = '';
+                            descontoManualInput.value = '';
+                            descontoPercentInput.value = '';
                             atualizarTabelaOrcamento();
                         }).catch(error => console.error('Erro ao registrar a venda: ', error));
                     });
@@ -407,19 +449,68 @@
                         texto += `\n*Total: ${total}*`;
                         window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
                     });
+                    
+                    // NOVA FUNÇÃO: Compartilhar link de pedido
+                    document.getElementById('share-pedido-link-btn').addEventListener('click', () => {
+                        const url = `${window.location.origin}/pedido.html?user=${currentUserId}`;
+                        const mensagem = `Olá! 😊\n\nEstou enviando o link da nossa loja para você fazer seu pedido de forma fácil e rápida. Basta escolher os produtos e as quantidades que desejar!\n\nClique aqui: ${url}\n\nQualquer dúvida, é só me chamar!`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
+                    });
 
-                    // --- FUNÇÃO MODIFICADA PARA CARREGAR HISTÓRICO ---
+                    // NOVA FUNÇÃO: Carregar Pedidos Pendentes
+                    function carregarPedidosPendentes() {
+                        const container = document.getElementById('pedidos-pendentes-container');
+                        const listaDiv = document.getElementById('lista-pedidos-pendentes');
+                        const contadorBadge = document.getElementById('contador-pedidos');
+                        
+                        const unsub = getUserCollection('pedidos').where('status', '==', 'pendente').orderBy('createdAt', 'desc')
+                            .onSnapshot(snapshot => {
+                                if(snapshot.empty) {
+                                    container.style.display = 'none';
+                                    return;
+                                }
+                                
+                                container.style.display = 'block';
+                                listaDiv.innerHTML = '';
+                                contadorBadge.textContent = snapshot.size;
+
+                                snapshot.forEach(doc => {
+                                    const pedido = doc.data();
+                                    const pedidoItem = document.createElement('div');
+                                    pedidoItem.className = 'pedido-item';
+                                    pedidoItem.innerHTML = `
+                                        <p><strong>${pedido.clienteNome}</strong> - ${pedido.createdAt.toDate().toLocaleDateString('pt-BR')}</p>
+                                        <button class="btn-primary">Carregar Pedido</button>
+                                    `;
+                                    pedidoItem.querySelector('button').addEventListener('click', () => {
+                                        showAppConfirmation(`Deseja carregar o pedido de ${pedido.clienteNome}? O orçamento atual será substituído.`, () => {
+                                            document.getElementById('nomeCliente').value = pedido.clienteNome;
+                                            document.getElementById('telefoneCliente').value = pedido.clienteTelefone || '';
+                                            document.getElementById('formaPagamento').value = pedido.formaPagamento;
+                                            orcamento = pedido.itens;
+                                            atualizarTabelaOrcamento();
+                                            // Marcar como visualizado
+                                            getUserCollection('pedidos').doc(doc.id).update({ status: 'visualizado' });
+                                            document.querySelector('main').scrollIntoView({ behavior: 'smooth' });
+                                        });
+                                    });
+                                    listaDiv.appendChild(pedidoItem);
+                                });
+                            });
+                        firestoreUnsubscribes.push(unsub);
+                    }
+
+
                     function carregarHistoricoVendas() {
                         const unsub = getUserCollection('vendas').onSnapshot(snapshot => {
                             todasAsVendas = [];
                             snapshot.forEach(doc => todasAsVendas.push(doc.data()));
                             todasAsVendas.sort((a, b) => (b.data ? b.data.toMillis() : 0) - (a.data ? a.data.toMillis() : 0));
-                            filtrarErenderizarVendas(); // Chama a função de filtro/renderização
+                            filtrarErenderizarVendas();
                         });
                         firestoreUnsubscribes.push(unsub);
                     }
-
-                    // --- NOVA FUNÇÃO PARA RENDERIZAR A TABELA DE VENDAS COM PAGINAÇÃO ---
+                    
                     function renderizarVendas() {
                         const tabelaCorpo = document.getElementById('historico-vendas-body');
                         const pageInfo = document.getElementById("page-info-vendas");
@@ -458,7 +549,6 @@
                             tabelaCorpo.appendChild(tr);
                         });
 
-                        // Atualiza os controles de paginação
                         pageInfo.textContent = `Página ${currentPageVendas} de ${totalPages}`;
                         prevButton.disabled = currentPageVendas === 1;
                         nextButton.disabled = currentPageVendas === totalPages || totalPages === 0;
@@ -468,8 +558,7 @@
                     const filtroDataInicio = document.getElementById('filtro-data-inicio');
                     const filtroDataFim = document.getElementById('filtro-data-fim');
                     const limparFiltroBtn = document.getElementById('limpar-filtro-data');
-
-                    // --- FUNÇÃO MODIFICADA PARA FILTRAR E RENDERIZAR ---
+                    
                     function filtrarErenderizarVendas() {
                         const termo = pesquisaInput.value.toLowerCase().trim();
                         const dataInicio = filtroDataInicio.value;
@@ -501,8 +590,8 @@
                         }
 
                         vendasFiltradas = vendasTemp;
-                        currentPageVendas = 1; // Reseta para a primeira página
-                        renderizarVendas(); // Chama a renderização
+                        currentPageVendas = 1; 
+                        renderizarVendas(); 
                     }
 
                     pesquisaInput.addEventListener('input', filtrarErenderizarVendas);
@@ -513,8 +602,7 @@
                         filtroDataFim.value = '';
                         filtrarErenderizarVendas();
                     });
-
-                    // --- LISTENERS PARA OS BOTÕES DE PAGINAÇÃO DE VENDAS ---
+                    
                     document.getElementById('prev-page-vendas').addEventListener('click', () => {
                         if (currentPageVendas > 1) {
                             currentPageVendas--;
@@ -530,14 +618,13 @@
                         }
                     });
 
-                    // --- Initial Load ---
                     document.getElementById('dataVenda').value = new Date().toLocaleDateString('pt-BR');
                     carregarProdutosParaVenda();
                     carregarHistoricoVendas();
+                    carregarPedidosPendentes(); // Chamar a nova função
                 }
             });
         });
     </script>
 </body>
 </html>
-
