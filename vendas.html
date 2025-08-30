@@ -450,9 +450,10 @@
                         window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
                     });
                     
-                    // NOVA FUNÇÃO: Compartilhar link de pedido
+                    // FUNÇÃO CORRIGIDA: Compartilhar link de pedido
                     document.getElementById('share-pedido-link-btn').addEventListener('click', () => {
-                        const url = `${window.location.origin}/pedido.html?user=${currentUserId}`;
+                        // AQUI ESTÁ A CORREÇÃO: Adicionando o nome do repositório
+                        const url = `${window.location.origin}/Teste/pedido.html?user=${currentUserId}`;
                         const mensagem = `Olá! 😊\n\nEstou enviando o link da nossa loja para você fazer seu pedido de forma fácil e rápida. Basta escolher os produtos e as quantidades que desejar!\n\nClique aqui: ${url}\n\nQualquer dúvida, é só me chamar!`;
                         window.open(`https://wa.me/?text=${encodeURIComponent(mensagem)}`, '_blank');
                     });
@@ -628,3 +629,4 @@
     </script>
 </body>
 </html>
+
